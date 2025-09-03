@@ -232,9 +232,9 @@ export default function BrowserScreen() {
   };
 
   const handleNewTab = () => {
-    const newTabUrl = 'https://www.google.com';
-    setCurrentUrl(newTabUrl);
-    setUrl(newTabUrl);
+    const tabId = createNewTab('https://www.google.com');
+    setCurrentUrl('https://www.google.com');
+    setUrl('https://www.google.com');
     setIsHomePage(false);
   };
 
