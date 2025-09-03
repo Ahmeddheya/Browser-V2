@@ -232,9 +232,9 @@ export default function BrowserScreen() {
   };
 
   const handleNewTab = () => {
-    const tabId = createNewTab('https://www.google.com');
-    setCurrentUrl('https://www.google.com');
-    setUrl('https://www.google.com');
+    const newTabUrl = 'https://www.google.com';
+    setCurrentUrl(newTabUrl);
+    setUrl(newTabUrl);
     setIsHomePage(false);
   };
 
@@ -314,38 +314,21 @@ export default function BrowserScreen() {
   // }, [nightMode]);
 
   // Handle desktop mode changes by reloading the page
-  useEffect(() => {
-    if (webViewRef.current && currentUrl && !isHomePage) {
-      webViewRef.current.reload();
-    }
-  }, [desktopMode]);
+  // useEffect(() => {
+  //   if (webViewRef.current && currentUrl) {
+  //     webViewRef.current.reload();
+  //   }
+  // }, [desktopMode]);
 
-  // Handle night mode changes dynamically
-  useEffect(() => {
-    if (webViewRef.current && currentUrl && !isHomePage) {
-      if (nightMode) {
-        webViewRef.current.injectJavaScript(nightModeCSS);
-      } else {
-        webViewRef.current.injectJavaScript(removeNightModeCSS);
-      }
-    }
-  }, [nightMode]);
 
-  // Apply night mode to entire app
-  const containerStyle = nightMode ? [styles.container, styles.nightModeContainer] : styles.container;
-  const topBarStyle = nightMode ? [styles.topBar, styles.nightModeTopBar] : styles.topBar;
 
   // Incognito mode colors
   const gradientColors = incognitoMode 
     ? ['#2c2c2c', '#1a1a1a'] 
-    : nightMode 
-    ? ['#000000', '#1a1a1a']
     : ['#0a0b1e', '#1a1b3a'];
   
   const topBarColor = incognitoMode 
     ? 'rgba(44, 44, 44, 0.9)' 
-    : nightMode
-    ? 'rgba(0, 0, 0, 0.9)'
     : 'rgba(26, 27, 58, 0.9)';
 
   // Show loading screen while initializing
@@ -364,10 +347,10 @@ export default function BrowserScreen() {
 
   if (isHomePage) {
     return (
-      <LinearGradient colors={gradientColors} style={containerStyle}>
+      <LinearGradient colors={gradientColors} style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
           {/* Top Bar */}
-          <View style={[topBarStyle, { backgroundColor: topBarColor }]}>
+          <View style={[styles.topBar, { backgroundColor: topBarColor }]}>
             <TouchableOpacity
               style={styles.topButton}
               onPress={() => {
@@ -455,10 +438,10 @@ export default function BrowserScreen() {
   }
 
   return (
-    <LinearGradient colors={gradientColors} style={containerStyle}>
+    <LinearGradient colors={gradientColors} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         {/* Top Bar */}
-        <View style={[topBarStyle, { backgroundColor: topBarColor }]}>
+        <View style={[styles.topBar, { backgroundColor: topBarColor }]}>
           <TouchableOpacity
               style={styles.topButton}
               onPress={() => {
@@ -544,6 +527,23 @@ export default function BrowserScreen() {
             onNavigationStateChange={handleNavigationStateChange}
             onLoadStart={() => setIsLoading(true)}
             onLoadEnd={() => setIsLoading(false)}
+          />
+        </View>
+
+        {/* Bottom Navigation */}
+        <BottomNavigation
+          canGoBack={canGoBack}
+          canGoForward={canGoForward}
+          onBack={goBack}
+          onForward={goForward}
+          onHome={goHome}
+          onTabs={openTabs}
+          onMenu={() => {
+            console.log('Menu button pressed, setting isMenuVisible to true');
+            setIsMenuVisible(true);
+          }}
+          isHomePage={isHomePage}
+        />
       </SafeAreaView>
 
       <MenuModal 
@@ -559,12 +559,6 @@ export default function BrowserScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  nightModeContainer: {
-    backgroundColor: '#000000',
-  },
-  nightModeTopBar: {
-    backgroundColor: 'rgba(0, 0, 0, 0.95)',
   },
   findInPageContainer: {
     flexDirection: 'row',
