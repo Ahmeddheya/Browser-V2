@@ -24,25 +24,29 @@ interface TabCardProps {
   tab: Tab;
   onClose: () => void;
   onPress?: () => void;
-  isPressed?: boolean;
+  isSelectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelection?: () => void;
 }
 
 export const TabCard: React.FC<TabCardProps> = React.memo(({ 
   tab, 
   onClose, 
   onPress,
-  isPressed = false 
+  isSelectionMode = false,
+  isSelected = false,
+  onToggleSelection
 }) => {
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
   
   React.useEffect(() => {
     Animated.spring(scaleAnim, {
-      toValue: isPressed ? 0.95 : 1,
+      toValue: isSelected ? 0.95 : 1,
       useNativeDriver: true,
       tension: 300,
       friction: 10,
     }).start();
-  }, [isPressed, scaleAnim]);
+  }, [isSelected, scaleAnim]);
 
   const getDomainFromUrl = (url: string) => {
     try {
@@ -73,20 +77,34 @@ export const TabCard: React.FC<TabCardProps> = React.memo(({
     <Animated.View style={[styles.container, { transform: [{ scale: scaleAnim }] }]}>
     <Pressable
       style={styles.pressable}
-      onPress={onPress}
+      onPress={isSelectionMode ? onToggleSelection : onPress}
+      onLongPress={onToggleSelection}
     >
       <LinearGradient
-        colors={getPreviewBackground()}
+        colors={isSelected ? ['rgba(66, 133, 244, 0.3)', 'rgba(66, 133, 244, 0.1)'] : getPreviewBackground()}
         style={styles.gradient}
       >
+        {/* Selection Indicator */}
+        {isSelectionMode && (
+          <View style={styles.selectionIndicator}>
+            <Ionicons 
+              name={isSelected ? "checkmark-circle" : "ellipse-outline"} 
+              size={20} 
+              color={isSelected ? "#4CAF50" : "rgba(255, 255, 255, 0.5)"} 
+            />
+          </View>
+        )}
+
         {/* Close Button */}
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={onClose}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Ionicons name="close" size={responsiveIconSize(16)} color="#ff6b6b" />
-        </TouchableOpacity>
+        {!isSelectionMode && (
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={onClose}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="close" size={responsiveIconSize(16)} color="#ff6b6b" />
+          </TouchableOpacity>
+        )}
 
         {/* Preview Area */}
         <View style={styles.previewArea}>
@@ -148,6 +166,12 @@ const styles = StyleSheet.create({
     minHeight: responsiveHeight(140),
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  selectionIndicator: {
+    position: 'absolute',
+    top: responsiveSpacing(8),
+    left: responsiveSpacing(8),
+    zIndex: 2,
   },
   closeButton: {
     position: 'absolute',

@@ -44,8 +44,29 @@ export const MenuModal: React.FC<MenuModalProps> = ({ visible, onClose, currentU
     toggleIncognitoMode,
     desktopMode,
     toggleDesktopMode,
-    addBookmark
+    addBookmark,
+    updateSetting
   } = useBrowserStore();
+
+  const handleNightModeToggle = async () => {
+    await toggleNightMode();
+    onClose();
+  };
+
+  const handleDesktopModeToggle = async () => {
+    await toggleDesktopMode();
+    // Reload current page to apply desktop mode
+    if (currentUrl && currentUrl !== 'about:blank') {
+      // This would trigger a reload in the WebView
+      console.log('Desktop mode toggled, page should reload');
+    }
+    onClose();
+  };
+
+  const handleIncognitoToggle = async () => {
+    await toggleIncognitoMode();
+    onClose();
+  };
 
   const handleShare = async () => {
     try {
@@ -126,10 +147,10 @@ export const MenuModal: React.FC<MenuModalProps> = ({ visible, onClose, currentU
   // Flattened menu items without sections for cleaner design
   const menuItems = [
     { icon: 'bookmark-outline', title: 'Add bookmark', active: false, onPress: handleAddBookmark },
-    { icon: 'moon-outline', title: 'Night mode', active: nightMode, onPress: toggleNightMode },
-    { icon: 'desktop-outline', title: 'Desktop site', active: desktopMode, onPress: toggleDesktopMode },
+    { icon: 'moon-outline', title: 'Night mode', active: nightMode, onPress: handleNightModeToggle },
+    { icon: 'desktop-outline', title: 'Desktop site', active: desktopMode, onPress: handleDesktopModeToggle },
     { icon: 'settings-outline', title: 'Settings', active: false, onPress: () => navigateTo('Settings') },
-    { icon: 'eye-off-outline', title: 'Incognito mode', active: incognitoMode, onPress: toggleIncognitoMode },
+    { icon: 'eye-off-outline', title: 'Incognito mode', active: incognitoMode, onPress: handleIncognitoToggle },
     { icon: 'search-outline', title: 'Find in page', active: showFindInPage, onPress: handleFindInPage },
     { icon: 'share-outline', title: 'Share', active: false, onPress: handleShare },
     { icon: 'time-outline', title: 'History', active: false, onPress: () => navigateTo('History') },

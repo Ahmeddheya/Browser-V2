@@ -43,8 +43,8 @@ export default function DownloadsScreen() {
 
   const handleStartTestDownload = async () => {
     try {
-      const testUrl = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
-      await DownloadManager.downloadFromWebView(testUrl, 'test-document.pdf');
+      const testUrl = 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4';
+      await DownloadManager.downloadFromWebView(testUrl, 'sample-video.mp4');
       // Reload downloads after starting
       setTimeout(loadDownloads, 1000);
     } catch (error) {

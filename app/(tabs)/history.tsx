@@ -16,14 +16,32 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useBrowserStore } from '../../store/browserStore';
 import { HistoryItem, StorageManager } from '../../utils/storage';
+import {
+  responsiveSpacing,
+  responsiveFontSize,
+  responsiveIconSize,
+  responsiveWidth,
+  responsiveHeight,
+  responsiveBorderRadius,
+  isSmallScreen,
+} from '@/utils/responsive';
 
 export default function HistoryScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredHistory, setFilteredHistory] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
+  const [groupBy, setGroupBy] = useState<'date' | 'site'>('date');
+  const [showGroupOptions, setShowGroupOptions] = useState(false);
   
-  const { history, loadHistory, clearHistory, searchHistory } = useBrowserStore();
+  const { history, loadHistory, clearHistory, searchHistory, nightMode, incognitoMode } = useBrowserStore();
+
+  // Colors based on mode
+  const gradientColors = incognitoMode 
+    ? ['#2c2c2c', '#1a1a1a'] 
+    : nightMode 
+    ? ['#000000', '#1a1a1a']
+    : ['#0a0b1e', '#1a1b3a'];
 
   // Load history on component mount
   useEffect(() => {
@@ -154,6 +172,67 @@ export default function HistoryScreen() {
     );
   };
 
+  const groupHistoryByDate = (historyItems: HistoryItem[]) => {
+    const groups: { [key: string]: HistoryItem[] } = {};
+    
+    historyItems.forEach(item => {
+      const date = new Date(item.timestamp);
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      let groupKey: string;
+      if (date.toDateString() === today.toDateString()) {
+        groupKey = 'Today';
+      } else if (date.toDateString() === yesterday.toDateString()) {
+        groupKey = 'Yesterday';
+      } else {
+        groupKey = date.toLocaleDateString();
+      }
+      
+      if (!groups[groupKey]) {
+        groups[groupKey] = [];
+      }
+      groups[groupKey].push(item);
+    });
+    
+    return groups;
+  };
+
+  const groupHistoryBySite = (historyItems: HistoryItem[]) => {
+    const groups: { [key: string]: HistoryItem[] } = {};
+    
+    historyItems.forEach(item => {
+      try {
+        const domain = new URL(item.url).hostname.replace('www.', '');
+        if (!groups[domain]) {
+          groups[domain] = [];
+        }
+        groups[domain].push(item);
+      } catch {
+        if (!groups['Other']) {
+          groups['Other'] = [];
+        }
+        groups['Other'].push(item);
+      }
+    });
+    
+    return groups;
+  };
+
+  const renderGroupedHistory = () => {
+    const groups = groupBy === 'date' 
+      ? groupHistoryByDate(filteredHistory)
+      : groupHistoryBySite(filteredHistory);
+    
+    return Object.entries(groups).map(([groupName, items]) => (
+      <View key={groupName} style={styles.historyGroup}>
+        <Text style={styles.groupTitle}>{groupName}</Text>
+        {items.map(item => renderHistoryItem({ item }))}
+      </View>
+    ));
+  };
+
   const renderHistoryItem = ({ item }: { item: HistoryItem }) => (
     <TouchableOpacity 
       style={styles.historyItem}
@@ -182,18 +261,63 @@ export default function HistoryScreen() {
   );
 
   return (
-    <LinearGradient colors={['#0a0b1e', '#1a1b3a']} style={styles.container}>
+    <LinearGradient colors={gradientColors} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color="#ffffff" />
+            <Ionicons name="arrow-back" size={responsiveIconSize(24)} color="#ffffff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>History</Text>
-          <TouchableOpacity onPress={handleClearHistory}>
-            <Ionicons name="trash-outline" size={24} color="#ffffff" />
-          </TouchableOpacity>
+          
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>History</Text>
+            {incognitoMode && (
+              <Text style={styles.incognitoLabel}>Incognito Mode</Text>
+            )}
+          </View>
+          
+          <View style={styles.headerActions}>
+            <TouchableOpacity 
+              onPress={() => setShowGroupOptions(!showGroupOptions)}
+              style={styles.headerButton}
+            >
+              <Ionicons name="options-outline" size={responsiveIconSize(20)} color="#ffffff" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleClearHistory} style={styles.headerButton}>
+              <Ionicons name="trash-outline" size={responsiveIconSize(20)} color="#ffffff" />
+            </TouchableOpacity>
+          </View>
         </View>
+
+        {/* Group Options */}
+        {showGroupOptions && (
+          <View style={styles.groupOptions}>
+            <TouchableOpacity
+              style={[styles.groupOption, groupBy === 'date' && styles.activeGroupOption]}
+              onPress={() => {
+                setGroupBy('date');
+                setShowGroupOptions(false);
+              }}
+            >
+              <Ionicons name="calendar-outline" size={16} color={groupBy === 'date' ? '#4CAF50' : '#888'} />
+              <Text style={[styles.groupOptionText, groupBy === 'date' && styles.activeGroupOptionText]}>
+                By Date
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.groupOption, groupBy === 'site' && styles.activeGroupOption]}
+              onPress={() => {
+                setGroupBy('site');
+                setShowGroupOptions(false);
+              }}
+            >
+              <Ionicons name="globe-outline" size={16} color={groupBy === 'site' ? '#4CAF50' : '#888'} />
+              <Text style={[styles.groupOptionText, groupBy === 'site' && styles.activeGroupOptionText]}>
+                By Site
+              </Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        )}
 
         {/* Search Bar */}
         <View style={styles.searchContainer}>
@@ -228,13 +352,12 @@ export default function HistoryScreen() {
             <Text style={styles.loadingText}>Loading history...</Text>
           </View>
         ) : filteredHistory.length > 0 ? (
-          <FlatList
-            data={filteredHistory}
-            renderItem={renderHistoryItem}
-            keyExtractor={item => item.id}
+          <ScrollView 
             contentContainerStyle={styles.historyList}
             showsVerticalScrollIndicator={false}
-          />
+          >
+            {renderGroupedHistory()}
+          </ScrollView>
         ) : (
           <View style={styles.emptyState}>
             <Ionicons name="time-outline" size={64} color="#666" />
@@ -263,20 +386,85 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    paddingTop: 50,
+    paddingHorizontal: responsiveSpacing(20),
+    paddingVertical: responsiveSpacing(16),
+    paddingTop: responsiveSpacing(50),
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
     backgroundColor: 'rgba(10, 11, 30, 0.95)',
     elevation: 4,
   },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: responsiveSpacing(16),
+  },
   headerTitle: {
-    fontSize: 20,
+    fontSize: responsiveFontSize(20),
     fontWeight: 'bold',
     color: '#ffffff',
+  },
+  incognitoLabel: {
+    fontSize: responsiveFontSize(10),
+    color: '#ff6b6b',
+    textAlign: 'center',
+    marginTop: responsiveSpacing(2),
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  headerActions: {
+    flexDirection: 'row',
+  },
+  headerButton: {
+    width: responsiveWidth(36),
+    height: responsiveHeight(36),
+    borderRadius: responsiveBorderRadius(18),
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: responsiveSpacing(8),
+  },
+  groupOptions: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    marginHorizontal: responsiveSpacing(20),
+    marginVertical: responsiveSpacing(8),
+    borderRadius: responsiveBorderRadius(8),
+    padding: responsiveSpacing(4),
+  },
+  groupOption: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: responsiveSpacing(8),
+    borderRadius: responsiveBorderRadius(6),
+  },
+  activeGroupOption: {
+    backgroundColor: 'rgba(76, 175, 80, 0.2)',
+  },
+  groupOptionText: {
+    color: '#888',
+    fontSize: responsiveFontSize(12),
+    fontWeight: '500',
+    marginLeft: responsiveSpacing(4),
+  },
+  activeGroupOptionText: {
+    color: '#4CAF50',
+  },
+  historyGroup: {
+    marginBottom: responsiveSpacing(20),
+  },
+  groupTitle: {
+    fontSize: responsiveFontSize(14),
+    fontWeight: '600',
+    color: '#4CAF50',
+    marginBottom: responsiveSpacing(12),
+    paddingHorizontal: responsiveSpacing(4),
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   searchContainer: {
     flexDirection: 'row',

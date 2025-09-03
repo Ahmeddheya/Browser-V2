@@ -322,17 +322,9 @@ export default function SettingsScreen() {
           onPress: () => setCurrentView('appearance'),
         },
         {
-          icon: 'moon-outline',
-          title: 'Dark Mode',
-          subtitle: 'Always use dark theme',
-          type: 'switch',
-          value: darkMode,
-          onToggle: toggleDarkMode,
-        },
-        {
           icon: 'moon',
           title: 'Night Mode',
-          subtitle: 'Apply night filter to web pages',
+          subtitle: 'Apply night filter to entire app',
           type: 'switch',
           value: nightMode,
           onToggle: toggleNightMode,

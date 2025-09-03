@@ -335,9 +335,68 @@ export class DownloadManager {
     if (Platform.OS === 'web') {
       // For web, use browser's native download
       try {
-        // Create a more robust web download
+        // Create download entry in storage first
+        const downloadId = await StorageManager.addDownload({
+          name: filename || this.generateFilename(url),
+          url,
+          localPath: '',
+          size: 0,
+          type: this.getFileType(filename || this.generateFilename(url)),
+          progress: 0,
+          status: 'downloading',
+        });
+
+        // Start actual download
         const response = await fetch(url);
-        const blob = await response.blob();
+        const contentLength = response.headers.get('content-length');
+        const totalSize = contentLength ? parseInt(contentLength, 10) : 0;
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error('Failed to get response reader');
+        }
+
+        const chunks: Uint8Array[] = [];
+        let receivedLength = 0;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) break;
+          
+          chunks.push(value);
+          receivedLength += value.length;
+          
+          // Update progress
+          const progress = totalSize > 0 ? (receivedLength / totalSize) * 100 : 0;
+          await StorageManager.updateDownload(downloadId, {
+            progress: Math.round(progress),
+            size: totalSize,
+          });
+          
+          if (onProgress) {
+            onProgress({
+              totalBytesWritten: receivedLength,
+              totalBytesExpectedToWrite: totalSize,
+              progress,
+            });
+          }
+        }
+
+        // Combine chunks
+        const allChunks = new Uint8Array(receivedLength);
+        let position = 0;
+        for (const chunk of chunks) {
+          allChunks.set(chunk, position);
+          position += chunk.length;
+        }
+
+        // Create blob and download
+        const blob = new Blob([allChunks]);
         const downloadUrl = window.URL.createObjectURL(blob);
         
         const link = document.createElement('a');
@@ -347,10 +406,16 @@ export class DownloadManager {
         link.click();
         document.body.removeChild(link);
         
-        // Clean up the blob URL
+        // Clean up
         window.URL.revokeObjectURL(downloadUrl);
         
-        Alert.alert('Success', 'Download started using browser');
+        // Mark as completed
+        await StorageManager.updateDownload(downloadId, {
+          progress: 100,
+          status: 'completed',
+        });
+        
+        Alert.alert('Success', 'Download completed successfully');
       } catch (error) {
         console.error('Web download error:', error);
         Alert.alert('Error', `Download failed: ${error.message}`);
