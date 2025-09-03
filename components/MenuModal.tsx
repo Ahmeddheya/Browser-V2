@@ -50,17 +50,10 @@ export const MenuModal: React.FC<MenuModalProps> = ({ visible, onClose, currentU
 
   const handleNightModeToggle = async () => {
     await toggleNightMode();
-    onClose();
   };
 
   const handleDesktopModeToggle = async () => {
     await toggleDesktopMode();
-    // Reload current page to apply desktop mode
-    if (currentUrl && currentUrl !== 'about:blank') {
-      // This would trigger a reload in the WebView
-      console.log('Desktop mode toggled, page should reload');
-    }
-    onClose();
   };
 
   const handleIncognitoToggle = async () => {

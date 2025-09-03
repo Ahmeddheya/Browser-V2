@@ -316,7 +316,7 @@ export default function HistoryScreen() {
                 By Site
               </Text>
             </TouchableOpacity>
-          </TouchableOpacity>
+          </View>
         )}
 
         {/* Search Bar */}

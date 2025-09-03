@@ -332,6 +332,11 @@ export default function BrowserScreen() {
   }, [nightMode]);
 
   // Apply night mode to entire app
+  const appBackgroundStyle = nightMode ? {
+    backgroundColor: '#000000',
+  } : {};
+
+  // Apply night mode to entire app
   const containerStyle = nightMode ? [styles.container, styles.nightModeContainer] : styles.container;
   const topBarStyle = nightMode ? [styles.topBar, styles.nightModeTopBar] : styles.topBar;
 
@@ -364,7 +369,7 @@ export default function BrowserScreen() {
 
   if (isHomePage) {
     return (
-      <LinearGradient colors={gradientColors} style={containerStyle}>
+      <LinearGradient colors={gradientColors} style={[containerStyle, appBackgroundStyle]}>
         <SafeAreaView style={styles.safeArea}>
           {/* Top Bar */}
           <View style={[topBarStyle, { backgroundColor: topBarColor }]}>
@@ -455,7 +460,7 @@ export default function BrowserScreen() {
   }
 
   return (
-    <LinearGradient colors={gradientColors} style={containerStyle}>
+    <LinearGradient colors={gradientColors} style={[containerStyle, appBackgroundStyle]}>
       <SafeAreaView style={styles.safeArea}>
         {/* Top Bar */}
         <View style={[topBarStyle, { backgroundColor: topBarColor }]}>
@@ -544,6 +549,59 @@ export default function BrowserScreen() {
             onNavigationStateChange={handleNavigationStateChange}
             onLoadStart={() => setIsLoading(true)}
             onLoadEnd={() => setIsLoading(false)}
+            userAgent={desktopMode ? desktopUserAgent : mobileUserAgent}
+            {...SecurityManager.getSecureWebViewProps()}
+            injectedJavaScript={nightMode ? nightModeCSS : removeNightModeCSS}
+            onFileDownload={handleDownloadRequest}
+          />
+        </View>
+
+        {/* Bottom Navigation - Only show when not on home page */}
+        {!isHomePage && (
+          <View style={styles.bottomNav}>
+            <TouchableOpacity
+              style={[styles.navButton, !canGoBack && styles.disabledButton]}
+              onPress={goBack}
+              disabled={!canGoBack}
+            >
+              <Ionicons 
+                name="chevron-back" 
+                size={24} 
+                color={canGoBack ? '#ffffff' : '#666'} 
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.navButton, !canGoForward && styles.disabledButton]}
+              onPress={goForward}
+              disabled={!canGoForward}
+            >
+              <Ionicons 
+                name="chevron-forward" 
+                size={24} 
+                color={canGoForward ? '#ffffff' : '#666'} 
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.navButton}
+              onPress={goHome}
+            >
+              <Ionicons name="home" size={24} color="#ffffff" />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.navButton} onPress={openTabs}>
+              <Ionicons name="copy-outline" size={24} color="#ffffff" />
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.navButton} 
+              onPress={() => setIsMenuVisible(true)}
+            >
+              <Ionicons name="menu" size={24} color="#ffffff" />
+            </TouchableOpacity>
+          </View>
+        )}
           />
         </View>
 
@@ -721,5 +779,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
+  },
+  bottomNav: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(26, 27, 58, 0.95)',
+    paddingVertical: responsiveSpacing(12),
+    paddingHorizontal: responsiveSpacing(20),
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    minHeight: responsiveHeight(68),
+  },
+  navButton: {
+    width: responsiveWidth(44),
+    height: responsiveHeight(44),
+    borderRadius: responsiveWidth(22),
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: responsiveSpacing(2),
+  },
+  disabledButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
 });
