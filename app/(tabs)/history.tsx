@@ -14,17 +14,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useBrowserStore } from '../../store/browserStore';
-import { HistoryItem, StorageManager } from '../../utils/storage';
-import {
-  responsiveSpacing,
-  responsiveFontSize,
-  responsiveIconSize,
-  responsiveWidth,
-  responsiveHeight,
-  responsiveBorderRadius,
-  isSmallScreen,
-} from '@/utils/responsive';
+import { useBrowserStore } from '@/store/browserStore';
+import { HistoryItem, StorageManager } from '@/utils/storage';
 
 export default function HistoryScreen() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -113,7 +104,6 @@ export default function HistoryScreen() {
   };
 
   const handleItemPress = (url: string) => {
-    // Navigate back to browser with the selected URL
     router.push({ pathname: '/', params: { url } });
   };
   
@@ -149,22 +139,18 @@ export default function HistoryScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              // Remove from filtered list immediately for better UX
               setFilteredHistory(prev => prev.filter(h => h.id !== item.id));
               
-              // Delete individual history item
               const currentHistory = await StorageManager.getHistory();
               const updatedHistory = currentHistory.filter(h => h.id !== item.id);
               await StorageManager.setItem('@browser_history', updatedHistory);
               
-              // Update the main store
               await loadHistory();
-              
               Alert.alert('Success', 'History item deleted');
             } catch (error) {
               console.error('Delete history error:', error);
               Alert.alert('Error', 'Failed to delete history item');
-              await loadHistory(); // Reload on error
+              await loadHistory();
             }
           }
         }
@@ -235,6 +221,7 @@ export default function HistoryScreen() {
 
   const renderHistoryItem = ({ item }: { item: HistoryItem }) => (
     <TouchableOpacity 
+      key={item.id}
       style={styles.historyItem}
       onPress={() => handleItemPress(item.url)}
     >
@@ -266,7 +253,7 @@ export default function HistoryScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={responsiveIconSize(24)} color="#ffffff" />
+            <Ionicons name="arrow-back" size={24} color="#ffffff" />
           </TouchableOpacity>
           
           <View style={styles.headerCenter}>
@@ -281,10 +268,10 @@ export default function HistoryScreen() {
               onPress={() => setShowGroupOptions(!showGroupOptions)}
               style={styles.headerButton}
             >
-              <Ionicons name="options-outline" size={responsiveIconSize(20)} color="#ffffff" />
+              <Ionicons name="options-outline" size={20} color="#ffffff" />
             </TouchableOpacity>
             <TouchableOpacity onPress={handleClearHistory} style={styles.headerButton}>
-              <Ionicons name="trash-outline" size={responsiveIconSize(20)} color="#ffffff" />
+              <Ionicons name="trash-outline" size={20} color="#ffffff" />
             </TouchableOpacity>
           </View>
         </View>
@@ -387,9 +374,9 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: responsiveSpacing(20),
-    paddingVertical: responsiveSpacing(16),
-    paddingTop: responsiveSpacing(50),
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    paddingTop: 50,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
     backgroundColor: 'rgba(10, 11, 30, 0.95)',
@@ -398,18 +385,18 @@ const styles = StyleSheet.create({
   headerCenter: {
     flex: 1,
     alignItems: 'center',
-    marginHorizontal: responsiveSpacing(16),
+    marginHorizontal: 16,
   },
   headerTitle: {
-    fontSize: responsiveFontSize(20),
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#ffffff',
   },
   incognitoLabel: {
-    fontSize: responsiveFontSize(10),
+    fontSize: 10,
     color: '#ff6b6b',
     textAlign: 'center',
-    marginTop: responsiveSpacing(2),
+    marginTop: 2,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -418,51 +405,51 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   headerButton: {
-    width: responsiveWidth(36),
-    height: responsiveHeight(36),
-    borderRadius: responsiveBorderRadius(18),
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: responsiveSpacing(8),
+    marginLeft: 8,
   },
   groupOptions: {
     flexDirection: 'row',
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    marginHorizontal: responsiveSpacing(20),
-    marginVertical: responsiveSpacing(8),
-    borderRadius: responsiveBorderRadius(8),
-    padding: responsiveSpacing(4),
+    marginHorizontal: 20,
+    marginVertical: 8,
+    borderRadius: 8,
+    padding: 4,
   },
   groupOption: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: responsiveSpacing(8),
-    borderRadius: responsiveBorderRadius(6),
+    paddingVertical: 8,
+    borderRadius: 6,
   },
   activeGroupOption: {
     backgroundColor: 'rgba(76, 175, 80, 0.2)',
   },
   groupOptionText: {
     color: '#888',
-    fontSize: responsiveFontSize(12),
+    fontSize: 12,
     fontWeight: '500',
-    marginLeft: responsiveSpacing(4),
+    marginLeft: 4,
   },
   activeGroupOptionText: {
     color: '#4CAF50',
   },
   historyGroup: {
-    marginBottom: responsiveSpacing(20),
+    marginBottom: 20,
   },
   groupTitle: {
-    fontSize: responsiveFontSize(14),
+    fontSize: 14,
     fontWeight: '600',
     color: '#4CAF50',
-    marginBottom: responsiveSpacing(12),
-    paddingHorizontal: responsiveSpacing(4),
+    marginBottom: 12,
+    paddingHorizontal: 4,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },

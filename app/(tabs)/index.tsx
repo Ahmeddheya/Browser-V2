@@ -11,8 +11,6 @@ import {
   Platform,
   Keyboard,
   ActivityIndicator,
-  Animated,
-  Easing,
   Alert,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
@@ -23,17 +21,6 @@ import { CurrencyWidget } from '@/components/CurrencyWidget';
 import { QuickAccessGrid } from '@/components/QuickAccessGrid';
 import { MenuModal } from '@/components/MenuModal';
 import { router } from 'expo-router';
-import {
-  responsiveSpacing,
-  responsiveFontSize,
-  responsiveIconSize,
-  responsiveWidth,
-  responsiveHeight,
-  responsiveBorderRadius,
-  isSmallScreen,
-  wp,
-  hp
-} from '@/utils/responsive';
 import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
 import { SecurityManager } from '@/utils/security';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
@@ -46,34 +33,22 @@ export default function BrowserScreen() {
   const webViewRef = useRef<WebView>(null);
   const [url, setUrl] = useState('https://www.google.com');
   const [currentUrl, setCurrentUrl] = useState('https://www.google.com');
-  const [searchText, setSearchText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
-  
-  // Debug menu visibility changes
-  useEffect(() => {
-    console.log('isMenuVisible changed to:', isMenuVisible);
-  }, [isMenuVisible]);
-  const [showMenu, setShowMenu] = useState(false);
   const [isHomePage, setIsHomePage] = useState(true);
   const [showFindInPage, setShowFindInPage] = useState(false);
   const [findText, setFindText] = useState('');
-  const [findMatches, setFindMatches] = useState({ current: 0, total: 0 });
   const [isInitialized, setIsInitialized] = useState(false);
   
   const { 
-    isAdBlockEnabled, 
-    toggleAdBlock,
-    addTab,
+    isAdBlockEnabled,
+    createNewTab,
     darkMode,
     nightMode,
-    toggleNightMode,
     desktopMode,
-    toggleDesktopMode,
     incognitoMode,
-    toggleIncognitoMode,
     addToHistory,
     initialize,
     settings
@@ -87,7 +62,7 @@ export default function BrowserScreen() {
         setIsInitialized(true);
       } catch (error) {
         console.error('Failed to initialize browser:', error);
-        setIsInitialized(true); // Continue even if initialization fails
+        setIsInitialized(true);
       }
     };
     
@@ -97,8 +72,6 @@ export default function BrowserScreen() {
   // Handle URL parameter from navigation
   useEffect(() => {
     const handleUrlParam = () => {
-      // Check if there's a URL parameter from navigation
-      // This would be set when navigating from history/bookmarks
       const params = new URLSearchParams(window.location.search);
       const paramUrl = params.get('url');
       if (paramUrl) {
@@ -111,13 +84,13 @@ export default function BrowserScreen() {
     handleUrlParam();
   }, []);
   
-  // Find in page functionality
   const toggleFindInPage = () => {
     setShowFindInPage(!showFindInPage);
     if (showFindInPage) {
       clearFindInPage();
     }
   };
+
   const clearFindInPage = () => {
     const clearScript = `
       (function() {
@@ -129,25 +102,11 @@ export default function BrowserScreen() {
     
     webViewRef.current?.injectJavaScript(clearScript);
     setFindText('');
-    setFindMatches({ current: 0, total: 0 });
-  };
-
-  const findInPage = (text) => {
-    console.log('Find in page disabled:', text);
-  };
-
-  const findNext = () => {
-    console.log('Find next disabled');
-  };
-
-  const findPrevious = () => {
-    console.log('Find previous disabled');
   };
 
   const handleSearch = () => {
     if (!url.trim()) return;
     
-    // Security check
     const sanitizedUrl = SecurityManager.sanitizeInput(url);
     if (SecurityManager.containsMaliciousContent(sanitizedUrl)) {
       Alert.alert('Security Warning', 'The URL contains potentially malicious content');
@@ -155,16 +114,12 @@ export default function BrowserScreen() {
     }
     
     let searchUrl = url;
-    
-    // Get search engine from settings
     const searchEngine = settings?.searchEngine || 'google';
     
     if (!url.includes('http://') && !url.includes('https://')) {
       if (url.includes('.') && !url.includes(' ')) {
-        // Looks like a URL
         searchUrl = `https://${url}`;
       } else {
-        // Search query - use selected search engine
         switch (searchEngine) {
           case 'bing':
             searchUrl = `https://www.bing.com/search?q=${encodeURIComponent(url)}`;
@@ -187,7 +142,6 @@ export default function BrowserScreen() {
     setCurrentUrl(searchUrl);
     setIsHomePage(false);
     
-    // Add to history
     addToHistory({
       title: url.includes('http') ? url : `Search: ${url}`,
       url: searchUrl,
@@ -200,15 +154,13 @@ export default function BrowserScreen() {
     Keyboard.dismiss();
   };
 
-  // Handle WebView navigation state changes
-  const handleNavigationStateChange = (navState) => {
+  const handleNavigationStateChange = (navState: any) => {
     setCanGoBack(navState.canGoBack);
     setCanGoForward(navState.canGoForward);
     setCurrentUrl(navState.url);
-    setUrl(navState.url); // Update URL bar to match current page
+    setUrl(navState.url);
     setIsLoading(navState.loading);
     
-    // Add to history when page loads successfully
     if (!navState.loading && navState.url && navState.title) {
       addToHistory({
         title: navState.title || navState.url,
@@ -218,12 +170,11 @@ export default function BrowserScreen() {
     }
   };
   
-  // Handle download requests
-  const handleDownloadRequest = async (event) => {
+  const handleDownloadRequest = async (event: any) => {
     const { url: downloadUrl } = event.nativeEvent;
     
     try {
-      const DownloadManager = (await import('../utils/downloadManager')).default;
+      const DownloadManager = (await import('@/utils/downloadManager')).default;
       await DownloadManager.downloadFromWebView(downloadUrl);
     } catch (error) {
       console.error('Download failed:', error);
@@ -245,10 +196,14 @@ export default function BrowserScreen() {
   };
 
   const goBack = () => {
-    try {
-      webViewRef.current?.goBack();
-    } catch (error) {
-      console.warn('Go back error:', error);
+    if (isHomePage) {
+      router.back();
+    } else {
+      try {
+        webViewRef.current?.goBack();
+      } catch (error) {
+        console.warn('Go back error:', error);
+      }
     }
   };
 
@@ -260,7 +215,9 @@ export default function BrowserScreen() {
     }
   };
 
-
+  const openTabs = () => {
+    router.push('/(tabs)/tabs');
+  };
 
   // Night mode CSS injection
   const nightModeCSS = `
@@ -298,28 +255,6 @@ export default function BrowserScreen() {
   const desktopUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
   const mobileUserAgent = 'Mozilla/5.0 (Linux; Android 10; SM-G975F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36';
 
-  const openTabs = () => {
-    router.push('/(tabs)/tabs');
-  };
-
-  // Handle night mode changes dynamically
-  // useEffect(() => {
-  //   if (webViewRef.current && currentUrl) {
-  //     if (nightMode) {
-  //       webViewRef.current.injectJavaScript(nightModeCSS);
-  //     } else {
-  //       webViewRef.current.injectJavaScript(removeNightModeCSS);
-  //     }
-  //   }
-  // }, [nightMode]);
-
-  // Handle desktop mode changes by reloading the page
-  useEffect(() => {
-    if (webViewRef.current && currentUrl && !isHomePage) {
-      webViewRef.current.reload();
-    }
-  }, [desktopMode]);
-
   // Handle night mode changes dynamically
   useEffect(() => {
     if (webViewRef.current && currentUrl && !isHomePage) {
@@ -331,14 +266,12 @@ export default function BrowserScreen() {
     }
   }, [nightMode]);
 
-  // Apply night mode to entire app
-  const appBackgroundStyle = nightMode ? {
-    backgroundColor: '#000000',
-  } : {};
-
-  // Apply night mode to entire app
-  const containerStyle = nightMode ? [styles.container, styles.nightModeContainer] : styles.container;
-  const topBarStyle = nightMode ? [styles.topBar, styles.nightModeTopBar] : styles.topBar;
+  // Handle desktop mode changes by reloading the page
+  useEffect(() => {
+    if (webViewRef.current && currentUrl && !isHomePage) {
+      webViewRef.current.reload();
+    }
+  }, [desktopMode]);
 
   // Incognito mode colors
   const gradientColors = incognitoMode 
@@ -352,6 +285,11 @@ export default function BrowserScreen() {
     : nightMode
     ? 'rgba(0, 0, 0, 0.9)'
     : 'rgba(26, 27, 58, 0.9)';
+
+  // Apply night mode to entire app
+  const appBackgroundStyle = nightMode ? {
+    backgroundColor: '#000000',
+  } : {};
 
   // Show loading screen while initializing
   if (!isInitialized) {
@@ -369,10 +307,10 @@ export default function BrowserScreen() {
 
   if (isHomePage) {
     return (
-      <LinearGradient colors={gradientColors} style={[containerStyle, appBackgroundStyle]}>
+      <LinearGradient colors={gradientColors} style={[styles.container, appBackgroundStyle]}>
         <SafeAreaView style={styles.safeArea}>
           {/* Top Bar */}
-          <View style={[topBarStyle, { backgroundColor: topBarColor }]}>
+          <View style={[styles.topBar, { backgroundColor: topBarColor }]}>
             <TouchableOpacity
               style={styles.topButton}
               onPress={() => {
@@ -383,11 +321,7 @@ export default function BrowserScreen() {
                 }
               }}
             >
-              <Ionicons 
-                name="refresh-outline" 
-                size={24} 
-                color="#ffffff" 
-              />
+              <Ionicons name="refresh-outline" size={24} color="#ffffff" />
             </TouchableOpacity>
             
             <View style={styles.logoContainer}>
@@ -432,53 +366,34 @@ export default function BrowserScreen() {
               setIsHomePage(false);
             }} />
           </ScrollView>
-
-          {/* Bottom Navigation */}
-          <BottomNavigation
-            canGoBack={canGoBack}
-            canGoForward={canGoForward}
-            onBack={goBack}
-            onForward={goForward}
-            onHome={goHome}
-            onTabs={openTabs}
-            onMenu={() => {
-              console.log('Menu button pressed, setting isMenuVisible to true');
-              setIsMenuVisible(true);
-            }}
-            isHomePage={isHomePage}
-          />
         </SafeAreaView>
 
         <MenuModal 
-        visible={isMenuVisible} 
-        onClose={() => setIsMenuVisible(false)}
-        currentUrl={currentUrl}
-        onFindInPage={toggleFindInPage}
-      />
+          visible={isMenuVisible} 
+          onClose={() => setIsMenuVisible(false)}
+          currentUrl={currentUrl}
+          onFindInPage={toggleFindInPage}
+        />
       </LinearGradient>
     );
   }
 
   return (
-    <LinearGradient colors={gradientColors} style={[containerStyle, appBackgroundStyle]}>
+    <LinearGradient colors={gradientColors} style={[styles.container, appBackgroundStyle]}>
       <SafeAreaView style={styles.safeArea}>
         {/* Top Bar */}
-        <View style={[topBarStyle, { backgroundColor: topBarColor }]}>
+        <View style={[styles.topBar, { backgroundColor: topBarColor }]}>
           <TouchableOpacity
-              style={styles.topButton}
-              onPress={() => {
-                 try {
-                   webViewRef.current?.reload();
-                 } catch (error) {
-                   console.warn('Reload error:', error);
-                 }
-               }}
-            >
-            <Ionicons 
-              name="refresh-outline" 
-              size={24} 
-              color="#ffffff" 
-            />
+            style={styles.topButton}
+            onPress={() => {
+              try {
+                webViewRef.current?.reload();
+              } catch (error) {
+                console.warn('Reload error:', error);
+              }
+            }}
+          >
+            <Ionicons name="refresh-outline" size={24} color="#ffffff" />
           </TouchableOpacity>
           
           <View style={styles.urlContainer}>
@@ -502,11 +417,11 @@ export default function BrowserScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* WebView */}
+        {/* WebView Container */}
         <View style={styles.webviewContainer}>
           {/* Loading Indicator */}
           {isLoading && (
-            <View style={styles.loadingContainer}>
+            <View style={styles.loadingOverlay}>
               <ActivityIndicator size="large" color="#4285f4" />
             </View>
           )}
@@ -517,27 +432,14 @@ export default function BrowserScreen() {
               <TextInput
                 style={styles.findInput}
                 value={findText}
-                onChangeText={(text) => {
-                  setFindText(text);
-                  if (text) findInPage(text);
-                }}
+                onChangeText={setFindText}
                 placeholder="Find in page"
                 placeholderTextColor="#999"
                 autoFocus
                 returnKeyType="search"
-                onSubmitEditing={() => findInPage(findText)}
               />
-              <Text style={styles.findCounter}>
-                {findMatches.total > 0 ? `${findMatches.current}/${findMatches.total}` : 'No matches'}
-              </Text>
-              <TouchableOpacity onPress={findPrevious} style={styles.findButton}>
-                <Ionicons name="chevron-up" size={responsiveIconSize(20)} color="#007AFF" />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={findNext} style={styles.findButton}>
-                <Ionicons name="chevron-down" size={responsiveIconSize(20)} color="#007AFF" />
-              </TouchableOpacity>
               <TouchableOpacity onPress={toggleFindInPage} style={styles.findButton}>
-                <Ionicons name="close" size={responsiveIconSize(20)} color="#007AFF" />
+                <Ionicons name="close" size={20} color="#007AFF" />
               </TouchableOpacity>
             </View>
           )}
@@ -550,75 +452,61 @@ export default function BrowserScreen() {
             onLoadStart={() => setIsLoading(true)}
             onLoadEnd={() => setIsLoading(false)}
             userAgent={desktopMode ? desktopUserAgent : mobileUserAgent}
-            {...SecurityManager.getSecureWebViewProps()}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            allowsInlineMediaPlayback={true}
+            mediaPlaybackRequiresUserAction={false}
+            allowsFullscreenVideo={true}
+            allowsBackForwardNavigationGestures={true}
             injectedJavaScript={nightMode ? nightModeCSS : removeNightModeCSS}
             onFileDownload={handleDownloadRequest}
           />
         </View>
 
-        {/* Bottom Navigation - Only show when not on home page */}
-        {!isHomePage && (
-          <View style={styles.bottomNav}>
-            <TouchableOpacity
-              style={[styles.navButton, !canGoBack && styles.disabledButton]}
-              onPress={goBack}
-              disabled={!canGoBack}
-            >
-              <Ionicons 
-                name="chevron-back" 
-                size={24} 
-                color={canGoBack ? '#ffffff' : '#666'} 
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.navButton, !canGoForward && styles.disabledButton]}
-              onPress={goForward}
-              disabled={!canGoForward}
-            >
-              <Ionicons 
-                name="chevron-forward" 
-                size={24} 
-                color={canGoForward ? '#ffffff' : '#666'} 
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.navButton}
-              onPress={goHome}
-            >
-              <Ionicons name="home" size={24} color="#ffffff" />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.navButton} onPress={openTabs}>
-              <Ionicons name="copy-outline" size={24} color="#ffffff" />
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.navButton} 
-              onPress={() => setIsMenuVisible(true)}
-            >
-              <Ionicons name="menu" size={24} color="#ffffff" />
-            </TouchableOpacity>
-          </View>
-        )}
-          />
-        </View>
-
         {/* Bottom Navigation */}
-        <BottomNavigation
-          canGoBack={canGoBack}
-          canGoForward={canGoForward}
-          onBack={goBack}
-          onForward={goForward}
-          onHome={goHome}
-          onTabs={openTabs}
-          onMenu={() => {
-            console.log('Menu button pressed, setting isMenuVisible to true');
-            setIsMenuVisible(true);
-          }}
-          isHomePage={isHomePage}
-        />
+        <View style={styles.bottomNav}>
+          <TouchableOpacity
+            style={[styles.navButton, !canGoBack && styles.disabledButton]}
+            onPress={goBack}
+            disabled={!canGoBack}
+          >
+            <Ionicons 
+              name="chevron-back" 
+              size={24} 
+              color={canGoBack ? '#ffffff' : '#666'} 
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.navButton, !canGoForward && styles.disabledButton]}
+            onPress={goForward}
+            disabled={!canGoForward}
+          >
+            <Ionicons 
+              name="chevron-forward" 
+              size={24} 
+              color={canGoForward ? '#ffffff' : '#666'} 
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.navButton}
+            onPress={goHome}
+          >
+            <Ionicons name="home" size={24} color="#ffffff" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.navButton} onPress={openTabs}>
+            <Ionicons name="copy-outline" size={24} color="#ffffff" />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.navButton} 
+            onPress={() => setIsMenuVisible(true)}
+          >
+            <Ionicons name="menu" size={24} color="#ffffff" />
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
 
       <MenuModal 
@@ -635,69 +523,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  nightModeContainer: {
-    backgroundColor: '#000000',
-  },
-  nightModeTopBar: {
-    backgroundColor: 'rgba(0, 0, 0, 0.95)',
-  },
-  findInPageContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f8f8f8',
-    paddingHorizontal: responsiveSpacing(10),
-    paddingVertical: responsiveSpacing(8),
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-    elevation: 2,
-  },
-  findInput: {
-    flex: 1,
-    height: responsiveHeight(36),
-    backgroundColor: '#fff',
-    borderRadius: responsiveBorderRadius(18),
-    paddingHorizontal: responsiveSpacing(15),
-    marginRight: responsiveSpacing(10),
-    borderWidth: 1,
-    borderColor: '#ddd',
-    fontSize: responsiveFontSize(14),
-  },
-  findCounter: {
-    marginRight: responsiveSpacing(10),
-    fontSize: responsiveFontSize(14),
-    color: '#666',
-  },
-  findButton: {
-    padding: responsiveSpacing(5),
-    marginLeft: responsiveSpacing(5),
-  },
   safeArea: {
     flex: 1,
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: responsiveSpacing(isSmallScreen() ? 12 : 16),
-    paddingVertical: responsiveSpacing(isSmallScreen() ? 8 : 12),
-    paddingTop: responsiveSpacing(isSmallScreen() ? 45 : 50),
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingTop: 50,
     backgroundColor: 'rgba(26, 27, 58, 0.9)',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
-    minHeight: responsiveHeight(isSmallScreen() ? 80 : 90),
+    minHeight: 90,
   },
   topButton: {
-    width: responsiveWidth(isSmallScreen() ? 38 : 44),
-    height: responsiveHeight(isSmallScreen() ? 38 : 44),
-    borderRadius: responsiveBorderRadius(isSmallScreen() ? 19 : 22),
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  activeButton: {
-    backgroundColor: 'rgba(76, 175, 80, 0.2)',
-  },
-  incognitoButton: {
-    backgroundColor: 'rgba(255, 107, 107, 0.2)',
   },
   logoContainer: {
     flex: 1,
@@ -705,7 +551,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logoText: {
-    fontSize: responsiveFontSize(isSmallScreen() ? 20 : 24),
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#ffffff',
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
@@ -716,51 +562,51 @@ const styles = StyleSheet.create({
     color: '#ff6b6b',
   },
   incognitoLabel: {
-    fontSize: responsiveFontSize(isSmallScreen() ? 8 : 10),
+    fontSize: 10,
     color: '#ff6b6b',
     textAlign: 'center',
-    marginTop: responsiveSpacing(2),
+    marginTop: 2,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   urlContainer: {
     flex: 1,
-    marginHorizontal: responsiveSpacing(isSmallScreen() ? 8 : 12),
+    marginHorizontal: 12,
   },
   urlInput: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: responsiveBorderRadius(20),
-    paddingHorizontal: responsiveSpacing(isSmallScreen() ? 12 : 16),
-    paddingVertical: responsiveSpacing(isSmallScreen() ? 6 : 8),
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     color: '#ffffff',
-    fontSize: responsiveFontSize(isSmallScreen() ? 14 : 16),
-    minHeight: responsiveHeight(isSmallScreen() ? 36 : 40),
+    fontSize: 16,
+    minHeight: 40,
   },
   content: {
     flex: 1,
   },
   searchContainer: {
-    padding: responsiveSpacing(isSmallScreen() ? 16 : 20),
+    padding: 20,
   },
   searchBar: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: responsiveBorderRadius(25),
+    borderRadius: 25,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: responsiveSpacing(isSmallScreen() ? 12 : 16),
-    paddingVertical: responsiveSpacing(isSmallScreen() ? 10 : 12),
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
-    minHeight: responsiveHeight(isSmallScreen() ? 44 : 48),
+    minHeight: 48,
   },
   searchIcon: {
-    marginRight: responsiveSpacing(12),
+    marginRight: 12,
   },
   searchInput: {
     flex: 1,
     color: '#ffffff',
-    fontSize: responsiveFontSize(isSmallScreen() ? 14 : 16),
+    fontSize: 16,
   },
   webviewContainer: {
     flex: 1,
@@ -769,7 +615,7 @@ const styles = StyleSheet.create({
   webview: {
     flex: 1,
   },
-  loadingContainer: {
+  loadingOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
@@ -780,25 +626,55 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 1000,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  findInPageContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f8f8',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+    elevation: 2,
+  },
+  findInput: {
+    flex: 1,
+    height: 36,
+    backgroundColor: '#fff',
+    borderRadius: 18,
+    paddingHorizontal: 15,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    fontSize: 14,
+  },
+  findButton: {
+    padding: 5,
+    marginLeft: 5,
+  },
   bottomNav: {
     flexDirection: 'row',
     backgroundColor: 'rgba(26, 27, 58, 0.95)',
-    paddingVertical: responsiveSpacing(12),
-    paddingHorizontal: responsiveSpacing(20),
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'space-between',
     alignItems: 'center',
-    minHeight: responsiveHeight(68),
+    minHeight: 68,
   },
   navButton: {
-    width: responsiveWidth(44),
-    height: responsiveHeight(44),
-    borderRadius: responsiveWidth(22),
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: responsiveSpacing(2),
+    marginHorizontal: 2,
   },
   disabledButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
