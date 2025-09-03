@@ -509,6 +509,51 @@ export default function BrowserScreen() {
         </View>
       </SafeAreaView>
 
+      {/* Bottom Navigation */}
+      <View style={styles.bottomNav}>
+        <TouchableOpacity
+          style={[styles.navButton, !canGoBack && styles.disabledButton]}
+          onPress={goBack}
+          disabled={!canGoBack}
+        >
+          <Ionicons 
+            name="chevron-back" 
+            size={24} 
+            color={canGoBack ? '#ffffff' : '#666'} 
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.navButton, !canGoForward && styles.disabledButton]}
+          onPress={goForward}
+          disabled={!canGoForward}
+        >
+          <Ionicons 
+            name="chevron-forward" 
+            size={24} 
+            color={canGoForward ? '#ffffff' : '#666'} 
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={goHome}
+        >
+          <Ionicons name="home" size={24} color="#ffffff" />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.navButton} onPress={openTabs}>
+          <Ionicons name="copy-outline" size={24} color="#ffffff" />
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.navButton} 
+          onPress={() => setIsMenuVisible(true)}
+        >
+          <Ionicons name="menu" size={24} color="#ffffff" />
+        </TouchableOpacity>
+      </View>
+
       <MenuModal 
         visible={isMenuVisible} 
         onClose={() => setIsMenuVisible(false)}
