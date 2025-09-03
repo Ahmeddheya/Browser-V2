@@ -38,6 +38,7 @@ export const CurrencyWidget: React.FC = () => {
       }).start();
     }
   }, [isLoading, fadeAnim]);
+  
   const loadData = async () => {
     try {
       // Animate refresh button
