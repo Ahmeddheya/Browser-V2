@@ -13,6 +13,7 @@ import {
   getGridItemWidth,
   isSmallScreen,
   wp
+} from '@/utils/responsive';
 
 interface Site {
   name: string;
