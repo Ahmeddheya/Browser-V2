@@ -1,6 +1,5 @@
 import { Platform, Alert } from 'react-native';
 import { StorageManager, DownloadItem } from '@/utils/storage';
-import { StorageManager, DownloadItem } from './storage';
 
 // Conditional imports for native modules
 let FileSystem: any = null;

@@ -1,16 +1,10 @@
 import { create } from 'zustand';
 import { StorageManager, BrowserSettings, HistoryItem, BookmarkItem } from '@/utils/storage';
-import SearchIndexManager from '@/utils/searchIndex';
+import { SearchIndexManager } from '@/utils/searchIndex';
 import DownloadManager from '@/utils/downloadManager';
 import { AdvancedBrowserSettings } from '@/types/settings';
 import { Tab, ClosedTab } from '@/types/tabs';
 import { resolveToUrlOrSearch, generateTabTitle } from '@/utils/resolveUrl';
-import { StorageManager, BrowserSettings, HistoryItem, BookmarkItem } from '../utils/storage';
-import SearchIndexManager from '../utils/searchIndex';
-import DownloadManager from '../utils/downloadManager';
-import { AdvancedBrowserSettings } from '../types/settings';
-import { Tab, ClosedTab } from '../types/tabs';
-import { resolveToUrlOrSearch, generateTabTitle } from '../utils/resolveUrl';
 
 interface BrowserState {
   // Settings
@@ -521,14 +515,6 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
   },
   
   // Search functionality
-  initializeSearch: async () => {
-    try {
-      await SearchIndexManager.initialize();
-    } catch (error) {
-      console.error('Failed to initialize search:', error);
-    }
-  },
-  
   performSearch: async (query, options = {}) => {
     try {
       return await SearchIndexManager.search(query, options);
@@ -539,13 +525,6 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
   },
   
   // Downloads
-  initializeDownloads: async () => {
-    try {
-      await DownloadManager.initialize();
-    } catch (error) {
-      console.error('Failed to initialize downloads:', error);
-    }
-  },
   
   // Initialization
   initialize: async () => {
@@ -554,8 +533,8 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
       await get().loadTabs();
       await get().loadHistory();
       await get().loadBookmarks();
-      await get().initializeSearch();
-      await get().initializeDownloads();
+      await SearchIndexManager.initialize();
+      await DownloadManager.initialize();
     } catch (error) {
       console.error('Failed to initialize browser store:', error);
       // If initialization fails due to corrupted data, reset and try again
@@ -566,6 +545,8 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
         await get().loadTabs();
         await get().loadHistory();
         await get().loadBookmarks();
+        await SearchIndexManager.initialize();
+        await DownloadManager.initialize();
       } catch (resetError) {
         console.error('Failed to reset and reinitialize:', resetError);
       }

@@ -430,5 +430,3 @@ export class SearchIndexManager {
     };
   }
 }
-
-export default SearchIndexManager;

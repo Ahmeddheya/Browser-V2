@@ -19,7 +19,7 @@ import { DownloadItem, StorageManager } from '@/utils/storage';
 export default function DownloadsScreen() {
   const [downloads, setDownloads] = useState<DownloadItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { initializeDownloads } = useBrowserStore();
+  const { } = useBrowserStore();
 
   useEffect(() => {
     loadDownloads();
@@ -28,7 +28,7 @@ export default function DownloadsScreen() {
   const loadDownloads = async () => {
     try {
       setIsLoading(true);
-      await initializeDownloads();
+      await DownloadManager.initialize();
       
       // Load real downloads from storage
       const realDownloads = await StorageManager.getDownloads();
