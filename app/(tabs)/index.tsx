@@ -184,6 +184,7 @@ export default function BrowserScreen() {
 
   const handleNewTab = () => {
     const tabId = createNewTab('https://www.google.com');
+    // Navigate to the new tab
     setCurrentUrl('https://www.google.com');
     setUrl('https://www.google.com');
     setIsHomePage(false);

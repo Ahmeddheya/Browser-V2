@@ -107,8 +107,13 @@ export default function TabsScreen() {
   };
 
   const handleTabPress = (tabId: string) => {
-    // Navigate to browser with this tab active
-    router.push('/');
+    try {
+      // Set this tab as active and navigate to browser
+      setActiveTab(tabId);
+      router.push('/(tabs)');
+    } catch (error) {
+      console.error('Tab press error:', error);
+    }
   };
 
   const toggleSelectionMode = () => {
