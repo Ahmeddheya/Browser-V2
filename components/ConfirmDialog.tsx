@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { colors } from '@/theme/colors';
+import { spacing } from '@/theme/spacing';
 import {
   responsiveSpacing,
   responsiveFontSize,
@@ -16,7 +18,7 @@ import {
   responsiveWidth,
   responsiveHeight,
   responsiveBorderRadius,
-}
+} from '@/utils/responsive';
 
 interface ConfirmDialogProps {
   visible: boolean;

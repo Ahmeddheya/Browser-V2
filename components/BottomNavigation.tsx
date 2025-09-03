@@ -7,7 +7,7 @@ import {
   responsiveWidth, 
   responsiveHeight,
   isSmallScreen
-}
+} from '@/utils/responsive';
 
 interface BottomNavigationProps {
   canGoBack: boolean;

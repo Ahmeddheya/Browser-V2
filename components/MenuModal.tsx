@@ -62,7 +62,7 @@ export const MenuModal: React.FC<MenuModalProps> = ({ visible, onClose, currentU
   const handleAddBookmark = async () => {
     try {
       if (!currentUrl || currentUrl === 'about:blank') {
-        Alert.alert('خطأ', 'لا يمكن إضافة هذه الصفحة للمفضلة');
+        Alert.alert('Error', 'Cannot bookmark this page');
         return;
       }
       
@@ -85,11 +85,11 @@ export const MenuModal: React.FC<MenuModalProps> = ({ visible, onClose, currentU
         folder: 'default',
       });
       
-      Alert.alert('نجح', 'تم إضافة الصفحة للمفضلة بنجاح');
+      Alert.alert('Success', 'Page added to bookmarks successfully');
       onClose();
     } catch (error) {
       console.error('Bookmark error:', error);
-      Alert.alert('خطأ', `فشل في إضافة المفضلة: ${error.message || 'خطأ غير معروف'}`);
+      Alert.alert('Error', `Failed to add bookmark: ${error.message || 'Unknown error'}`);
     }
   };
 

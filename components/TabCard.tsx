@@ -18,7 +18,7 @@ import {
   responsiveHeight,
   responsiveBorderRadius,
   isSmallScreen,
-}
+} from '@/utils/responsive';
 
 interface TabCardProps {
   tab: Tab;
