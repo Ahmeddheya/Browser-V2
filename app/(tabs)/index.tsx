@@ -35,10 +35,15 @@ import {
   wp,
   hp
 } from '@/utils/responsive';
+import { usePerformanceMonitor } from '@/utils/performance';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { SecurityManager } from '@/utils/security';
 
 const { width, height } = Dimensions.get('window');
 
 export default function BrowserScreen() {
+  usePerformanceMonitor('BrowserScreen');
+  
   const webViewRef = useRef<WebView>(null);
   const [url, setUrl] = useState('https://www.google.com');
   const [currentUrl, setCurrentUrl] = useState('https://www.google.com');
@@ -142,6 +147,13 @@ export default function BrowserScreen() {
 
   const handleSearch = () => {
     if (!url.trim()) return;
+    
+    // Security check
+    const sanitizedUrl = SecurityManager.sanitizeInput(url);
+    if (SecurityManager.containsMaliciousContent(sanitizedUrl)) {
+      Alert.alert('Security Warning', 'The URL contains potentially malicious content');
+      return;
+    }
     
     let searchUrl = url;
     
@@ -326,7 +338,7 @@ export default function BrowserScreen() {
       <LinearGradient colors={gradientColors} style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#4285f4" />
+            <LoadingSpinner size={32} color="#4285f4" />
             <Text style={{ color: '#ffffff', marginTop: 16, fontSize: 16 }}>Initializing...</Text>
           </View>
         </SafeAreaView>
@@ -528,6 +540,7 @@ export default function BrowserScreen() {
             mediaPlaybackRequiresUserAction={false}
             allowsFullscreenVideo={true}
             userAgent={desktopMode ? desktopUserAgent : mobileUserAgent}
+            {...SecurityManager.getSecureWebViewProps()}
           />
         </View>
 

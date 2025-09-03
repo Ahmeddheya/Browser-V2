@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CurrencyAPI, CurrencyRate, CryptoPrice } from '../utils/currencyApi';
 import {
@@ -18,6 +18,8 @@ export const CurrencyWidget: React.FC = () => {
   const [cryptos, setCryptos] = useState<CryptoPrice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<number>(0);
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const rotateAnim = React.useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     loadData();
@@ -27,8 +29,26 @@ export const CurrencyWidget: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (!isLoading) {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [isLoading, fadeAnim]);
   const loadData = async () => {
     try {
+      // Animate refresh button
+      Animated.timing(rotateAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }).start(() => {
+        rotateAnim.setValue(0);
+      });
+      
       setIsLoading(true);
       const [currencyData, cryptoData] = await Promise.all([
         CurrencyAPI.getCurrencyRates(),
@@ -58,13 +78,22 @@ export const CurrencyWidget: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       {/* Header with refresh */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Market Data</Text>
-        <TouchableOpacity onPress={loadData} style={styles.refreshButton}>
+        <Animated.View style={{
+          transform: [{
+            rotate: rotateAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: ['0deg', '360deg'],
+            })
+          }]
+        }}>
+          <TouchableOpacity onPress={loadData} style={styles.refreshButton}>
           <Ionicons name="refresh" size={20} color="#4285f4" />
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </Animated.View>
       </View>
 
       {/* Currency Rates */}
@@ -127,7 +156,7 @@ export const CurrencyWidget: React.FC = () => {
           </Text>
         </View>
       )}
-    </View>
+    </Animated.View>
   );
 };
 

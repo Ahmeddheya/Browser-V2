@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useBrowserStore } from '../../store/browserStore';
-import { HistoryItem } from '../../utils/storage';
+import { HistoryItem, StorageManager } from '../../utils/storage';
 
 export default function HistoryScreen() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -133,9 +133,18 @@ export default function HistoryScreen() {
             try {
               // Remove from filtered list immediately for better UX
               setFilteredHistory(prev => prev.filter(h => h.id !== item.id));
-              // Note: Individual item deletion would need to be implemented in StorageManager
-              await loadHistory(); // Reload to sync with storage
+              
+              // Delete individual history item
+              const currentHistory = await StorageManager.getHistory();
+              const updatedHistory = currentHistory.filter(h => h.id !== item.id);
+              await StorageManager.setItem('@browser_history', updatedHistory);
+              
+              // Update the main store
+              await loadHistory();
+              
+              Alert.alert('Success', 'History item deleted');
             } catch (error) {
+              console.error('Delete history error:', error);
               Alert.alert('Error', 'Failed to delete history item');
               await loadHistory(); // Reload on error
             }

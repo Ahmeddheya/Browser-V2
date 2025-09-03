@@ -304,6 +304,16 @@ export class StorageManager {
     }
   }
 
+  static async removeHistoryItem(id: string): Promise<void> {
+    try {
+      const history = await this.getHistory();
+      const filteredHistory = history.filter(h => h.id !== id);
+      await this.setItem(STORAGE_KEYS.HISTORY, filteredHistory);
+    } catch (error) {
+      console.error('Error removing history item:', error);
+      throw error;
+    }
+  }
   static async updateBookmark(id: string, updates: Partial<BookmarkItem>): Promise<void> {
     try {
       const bookmarks = await this.getBookmarks();

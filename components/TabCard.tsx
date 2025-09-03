@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Pressable,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,20 +27,22 @@ interface TabCardProps {
   isPressed?: boolean;
 }
 
-export const TabCard: React.FC<TabCardProps> = ({ 
+export const TabCard: React.FC<TabCardProps> = React.memo(({ 
   tab, 
   onClose, 
   onPress,
   isPressed = false 
 }) => {
-  const getFaviconUrl = (url: string) => {
-    try {
-      const domain = new URL(url).hostname;
-      return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
-    } catch {
-      return null;
-    }
-  };
+  const scaleAnim = React.useRef(new Animated.Value(1)).current;
+  
+  React.useEffect(() => {
+    Animated.spring(scaleAnim, {
+      toValue: isPressed ? 0.95 : 1,
+      useNativeDriver: true,
+      tension: 300,
+      friction: 10,
+    }).start();
+  }, [isPressed, scaleAnim]);
 
   const getDomainFromUrl = (url: string) => {
     try {
@@ -67,8 +70,9 @@ export const TabCard: React.FC<TabCardProps> = ({
   };
 
   return (
+    <Animated.View style={[styles.container, { transform: [{ scale: scaleAnim }] }]}>
     <Pressable
-      style={[styles.container, isPressed && styles.containerPressed]}
+      style={styles.pressable}
       onPress={onPress}
     >
       <LinearGradient
@@ -120,8 +124,9 @@ export const TabCard: React.FC<TabCardProps> = ({
         </View>
       </LinearGradient>
     </Pressable>
+    </Animated.View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -134,8 +139,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  containerPressed: {
-    transform: [{ scale: 0.98 }],
+  pressable: {
+    borderRadius: responsiveBorderRadius(16),
   },
   gradient: {
     borderRadius: responsiveBorderRadius(16),

@@ -12,7 +12,9 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useTabsStore } from '@/store/tabsStore';
+import { useBrowserStore } from '@/store/browserStore';
+import { TabCard } from '@/components/TabCard';
+import { RecentClosedItem } from '@/components/RecentClosedItem';
 import { router } from 'expo-router';
 import {
   responsiveSpacing,
@@ -34,7 +36,7 @@ export default function TabsScreen() {
     restoreClosedTab,
     clearAllClosed,
     loadTabs,
-  } = useTabsStore();
+  } = useBrowserStore();
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -47,17 +49,35 @@ export default function TabsScreen() {
   }, [loadTabs]);
 
   const handleCreateNewTab = () => {
-    const tabId = createNewTab();
-    // Navigate to home page to browse
-    router.push('/');
+    try {
+      const tabId = createNewTab('https://www.google.com');
+      console.log('New tab created with ID:', tabId);
+      // Navigate to home page to browse the new tab
+      router.push('/');
+    } catch (error) {
+      console.error('Create tab error:', error);
+      Alert.alert('Error', 'Failed to create new tab');
+    }
   };
 
   const handleCloseTab = (tabId: string) => {
-    closeTab(tabId);
+    try {
+      closeTab(tabId);
+      console.log('Tab closed:', tabId);
+    } catch (error) {
+      console.error('Close tab error:', error);
+      Alert.alert('Error', 'Failed to close tab');
+    }
   };
 
   const handleRestoreTab = (tabId: string) => {
-    restoreClosedTab(tabId);
+    try {
+      restoreClosedTab(tabId);
+      console.log('Tab restored:', tabId);
+    } catch (error) {
+      console.error('Restore tab error:', error);
+      Alert.alert('Error', 'Failed to restore tab');
+    }
   };
 
   const handleClearAllClosed = () => {
@@ -143,25 +163,12 @@ export default function TabsScreen() {
               </View>
               
               {activeTabs.map((tab) => (
-                <View key={tab.id} style={styles.tabItem}>
-                  <View style={styles.tabIcon}>
-                    <Ionicons name="globe-outline" size={responsiveIconSize(20)} color="#4285f4" />
-                  </View>
-                  <View style={styles.tabInfo}>
-                    <Text style={styles.tabTitle} numberOfLines={1}>
-                      {tab.title}
-                    </Text>
-                    <Text style={styles.tabUrl} numberOfLines={1}>
-                      {getDomainFromUrl(tab.url)}
-                    </Text>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.tabActionButton}
-                    onPress={() => handleCloseTab(tab.id)}
-                  >
-                    <Ionicons name="close" size={responsiveIconSize(18)} color="#ff6b6b" />
-                  </TouchableOpacity>
-                </View>
+                <TabCard
+                  key={tab.id}
+                  tab={tab}
+                  onClose={() => handleCloseTab(tab.id)}
+                  onPress={() => router.push('/')}
+                />
               ))}
             </View>
           )}
@@ -177,48 +184,24 @@ export default function TabsScreen() {
               </View>
               
               {closedTabs.map((tab) => (
-                <View key={tab.id} style={styles.closedTabItem}>
-                  <View style={styles.tabIcon}>
-                    <Ionicons name="time-outline" size={responsiveIconSize(20)} color="#ff9800" />
-                  </View>
-                  <View style={styles.tabInfo}>
-                    <Text style={styles.tabTitle} numberOfLines={1}>
-                      {tab.title}
-                    </Text>
-                    <Text style={styles.tabUrl} numberOfLines={1}>
-                      {getDomainFromUrl(tab.url)}
-                    </Text>
-                    <Text style={styles.timeAgo}>
-                      {getTimeAgo(tab.closedAt)}
-                    </Text>
-                  </View>
-                  <View style={styles.tabActions}>
-                    <TouchableOpacity
-                      style={[styles.tabActionButton, styles.restoreButton]}
-                      onPress={() => handleRestoreTab(tab.id)}
-                    >
-                      <MaterialIcons name="restore" size={responsiveIconSize(18)} color="#4285f4" />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.tabActionButton, styles.deleteButton]}
-                      onPress={() => {
-                        Alert.alert(
-                          'Delete Tab',
-                          'Are you sure you want to permanently delete this tab?',
-                          [
-                            { text: 'Cancel', style: 'cancel' },
-                            { text: 'Delete', style: 'destructive', onPress: () => {
-                              // For now, just remove from closed tabs
-                              // In a real implementation, you might want a separate delete function
-                            }}
-                          ]
-                        );
-                      }}
-                    >
-                      <MaterialCommunityIcons name="trash-can-outline" size={responsiveIconSize(18)} color="#ff6b6b" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
+                <RecentClosedItem
+                  key={tab.id}
+                  tab={tab}
+                  onRestore={() => handleRestoreTab(tab.id)}
+                  onDelete={() => {
+                    Alert.alert(
+                      'Delete Tab',
+                      'Are you sure you want to permanently delete this tab?',
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Delete', style: 'destructive', onPress: () => {
+                          // Remove from closed tabs
+                          // In a real implementation, you might want a separate delete function
+                        }}
+                      ]
+                    );
+                  }}
+                />
               ))}
             </View>
           )}
@@ -308,75 +291,10 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(12),
     fontWeight: '600',
   },
-  tabItem: {
+  tabsGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: responsiveBorderRadius(12),
-    padding: responsiveSpacing(16),
-    marginBottom: responsiveSpacing(12),
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  closedTabItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 152, 0, 0.05)',
-    borderRadius: responsiveBorderRadius(12),
-    padding: responsiveSpacing(16),
-    marginBottom: responsiveSpacing(12),
-    borderWidth: 1,
-    borderColor: 'rgba(255, 152, 0, 0.2)',
-  },
-  tabIcon: {
-    width: responsiveWidth(40),
-    height: responsiveHeight(40),
-    borderRadius: responsiveBorderRadius(20),
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: responsiveSpacing(12),
-  },
-  tabInfo: {
-    flex: 1,
-    marginRight: responsiveSpacing(12),
-  },
-  tabTitle: {
-    color: '#ffffff',
-    fontSize: responsiveFontSize(16),
-    fontWeight: '600',
-    marginBottom: responsiveSpacing(4),
-  },
-  tabUrl: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: responsiveFontSize(14),
-  },
-  timeAgo: {
-    color: '#ff9800',
-    fontSize: responsiveFontSize(12),
-    marginTop: responsiveSpacing(4),
-  },
-  tabActions: {
-    flexDirection: 'row',
-  },
-  tabActionButton: {
-    width: responsiveWidth(36),
-    height: responsiveHeight(36),
-    borderRadius: responsiveBorderRadius(18),
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: responsiveSpacing(8),
-  },
-  restoreButton: {
-    backgroundColor: 'rgba(66, 133, 244, 0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(66, 133, 244, 0.3)',
-  },
-  deleteButton: {
-    backgroundColor: 'rgba(255, 107, 107, 0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 107, 107, 0.3)',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   emptyState: {
     alignItems: 'center',

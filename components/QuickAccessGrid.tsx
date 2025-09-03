@@ -87,6 +87,14 @@ export const QuickAccessGrid: React.FC<QuickAccessGridProps> = ({ onSitePress })
 
     try {
       const customSites = await StorageManager.getItem<Site[]>('custom_sites', []);
+      
+      // Check for duplicates
+      const isDuplicate = customSites.some(site => site.url === url);
+      if (isDuplicate) {
+        Alert.alert('Error', 'This site is already in your quick access');
+        return;
+      }
+      
       const updatedCustomSites = [...customSites, customSite];
       await StorageManager.setItem('custom_sites', updatedCustomSites);
       

@@ -3,6 +3,8 @@ import { StorageManager, BrowserSettings, HistoryItem, BookmarkItem } from '../u
 import SearchIndexManager from '../utils/searchIndex';
 import DownloadManager from '../utils/downloadManager';
 import { AdvancedBrowserSettings } from '../types/settings';
+import { Tab, ClosedTab } from '../types/tabs';
+import { resolveToUrlOrSearch, generateTabTitle } from '../utils/resolveUrl';
 
 interface BrowserState {
   // Settings
@@ -15,14 +17,21 @@ interface BrowserState {
   toggleAdBlock: () => Promise<void>;
   
   // Tabs management
-  tabs: Array<{ id: string; title: string; url: string; isActive: boolean }>;
-  activeTabs: Array<{ id: string; title: string; url: string }>;
-  suspendedTabs: Array<{ id: string; title: string; url: string; suspendedAt: number }>;
+  tabs: Tab[];
+  activeTabs: Tab[];
+  closedTabs: ClosedTab[];
+  currentTabId?: string;
   addTab: (url: string, title: string) => string;
+  createNewTab: (url?: string) => string;
   closeTab: (tabId: string) => void;
+  closeAllActive: () => void;
   restoreTab: (tabId: string) => void;
-  clearAllSuspendedTabs: () => void;
-  closeAllTabs: () => void;
+  restoreClosedTab: (tabId: string) => void;
+  clearAllClosed: () => void;
+  updateTabUrl: (id: string, url: string) => void;
+  setActiveTab: (id: string) => void;
+  loadTabs: () => Promise<void>;
+  saveTabs: () => Promise<void>;
   
   // Theme and appearance
   darkMode: boolean;
@@ -197,57 +206,182 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
   // Tabs state
   tabs: [],
   activeTabs: [],
-  suspendedTabs: [],
+  closedTabs: [],
+  currentTabId: undefined,
+  
   addTab: (url: string, title: string) => {
     const newTab = {
       id: `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       title,
       url,
+      faviconUrl: undefined,
+      screenshotUrl: undefined,
+      createdAt: Date.now(),
       isActive: true,
     };
     
     set((state) => ({
       tabs: [...state.tabs, newTab],
       activeTabs: [...state.activeTabs, newTab],
+      currentTabId: newTab.id,
     }));
     
+    get().saveTabs();
     return newTab.id;
   },
+  
+  createNewTab: (url?: string) => {
+    const resolvedUrl = url ? resolveToUrlOrSearch(url) : 'about:blank';
+    const newTab: Tab = {
+      id: `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      title: generateTabTitle(resolvedUrl),
+      url: resolvedUrl,
+      faviconUrl: undefined,
+      screenshotUrl: undefined,
+      createdAt: Date.now(),
+      isActive: true,
+    };
+
+    set((state) => ({
+      tabs: [...state.tabs, newTab],
+      activeTabs: [...state.activeTabs, newTab],
+      currentTabId: newTab.id,
+    }));
+
+    get().saveTabs();
+    return newTab.id;
+  },
+  
   closeTab: (tabId: string) => {
     set((state) => {
       const tab = state.activeTabs.find(t => t.id === tabId);
       if (tab) {
+        const closedTab: ClosedTab = {
+          ...tab,
+          closedAt: Date.now(),
+        };
+        delete (closedTab as any).isActive;
+        
         return {
+          tabs: state.tabs.filter(t => t.id !== tabId),
           activeTabs: state.activeTabs.filter(t => t.id !== tabId),
-          suspendedTabs: [...state.suspendedTabs, { ...tab, suspendedAt: Date.now() }],
+          closedTabs: [closedTab, ...state.closedTabs].slice(0, 50),
+          currentTabId: state.currentTabId === tabId ? 
+            (state.activeTabs.find(tab => tab.id !== tabId)?.id || undefined) : 
+            state.currentTabId,
         };
       }
       return state;
     });
+    get().saveTabs();
   },
+  
+  closeAllActive: () => {
+    set((state) => {
+      const closedTabs: ClosedTab[] = state.activeTabs.map(tab => ({
+        ...tab,
+        closedAt: Date.now(),
+      })).map(tab => {
+        delete (tab as any).isActive;
+        return tab as ClosedTab;
+      });
+
+      return {
+        tabs: [],
+        activeTabs: [],
+        closedTabs: [...closedTabs, ...state.closedTabs].slice(0, 50),
+        currentTabId: undefined,
+      };
+    });
+    get().saveTabs();
+  },
+  
   restoreTab: (tabId: string) => {
     set((state) => {
-      const tab = state.suspendedTabs.find(t => t.id === tabId);
+      const tab = state.closedTabs.find(t => t.id === tabId);
       if (tab) {
-        const { suspendedAt, ...restoreTab } = tab;
+        const { closedAt, ...restoreTab } = tab;
+        const restoredTab: Tab = {
+          ...restoreTab,
+          isActive: true,
+          createdAt: Date.now(),
+        };
+        
         return {
-          suspendedTabs: state.suspendedTabs.filter(t => t.id !== tabId),
-          activeTabs: [...state.activeTabs, restoreTab],
+          tabs: [...state.tabs, restoredTab],
+          closedTabs: state.closedTabs.filter(t => t.id !== tabId),
+          activeTabs: [...state.activeTabs, restoredTab],
+          currentTabId: restoredTab.id,
         };
       }
       return state;
     });
+    get().saveTabs();
   },
-  clearAllSuspendedTabs: () => {
-    set((state) => ({
-      suspendedTabs: [],
-    }));
+  
+  restoreClosedTab: (tabId: string) => {
+    get().restoreTab(tabId);
   },
-  closeAllTabs: () => {
+  
+  clearAllClosed: () => {
     set((state) => ({
-      activeTabs: [],
-      suspendedTabs: [...state.suspendedTabs, ...state.activeTabs.map(tab => ({ ...tab, suspendedAt: Date.now() }))],
+      closedTabs: [],
     }));
+    get().saveTabs();
+  },
+  
+  updateTabUrl: (id: string, url: string) => {
+    const resolvedUrl = resolveToUrlOrSearch(url);
+    const title = generateTabTitle(resolvedUrl);
+
+    set((state) => ({
+      tabs: state.tabs.map(tab => 
+        tab.id === id 
+          ? { ...tab, url: resolvedUrl, title }
+          : tab
+      ),
+      activeTabs: state.activeTabs.map(tab => 
+        tab.id === id 
+          ? { ...tab, url: resolvedUrl, title }
+          : tab
+      ),
+    }));
+
+    get().saveTabs();
+  },
+
+  setActiveTab: (id: string) => {
+    set({ currentTabId: id });
+  },
+
+  loadTabs: async () => {
+    try {
+      const [activeTabsData, closedTabsData] = await Promise.all([
+        StorageManager.getItem<Tab[]>('browser_active_tabs', []),
+        StorageManager.getItem<ClosedTab[]>('browser_closed_tabs', []),
+      ]);
+
+      set({
+        tabs: activeTabsData,
+        activeTabs: activeTabsData,
+        closedTabs: closedTabsData,
+        currentTabId: activeTabsData.length > 0 ? activeTabsData[0].id : undefined,
+      });
+    } catch (error) {
+      console.error('Failed to load tabs from storage:', error);
+    }
+  },
+
+  saveTabs: async () => {
+    try {
+      const { activeTabs, closedTabs } = get();
+      await Promise.all([
+        StorageManager.setItem('browser_active_tabs', activeTabs),
+        StorageManager.setItem('browser_closed_tabs', closedTabs),
+      ]);
+    } catch (error) {
+      console.error('Failed to save tabs to storage:', error);
+    }
   },
   
   // Theme state
@@ -357,6 +491,7 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
       await get().loadBookmarks();
     } catch (error) {
       console.error('Failed to remove bookmark:', error);
+      throw error;
     }
   },
   
@@ -366,6 +501,7 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
       await get().loadBookmarks();
     } catch (error) {
       console.error('Failed to update bookmark:', error);
+      throw error;
     }
   },
   
@@ -409,6 +545,7 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
   initialize: async () => {
     try {
       await get().loadSettings();
+      await get().loadTabs();
       await get().loadHistory();
       await get().loadBookmarks();
       await get().initializeSearch();
@@ -420,6 +557,7 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
         console.log('Attempting to reset corrupted data...');
         await StorageManager.resetCorruptedData();
         await get().loadSettings();
+        await get().loadTabs();
         await get().loadHistory();
         await get().loadBookmarks();
       } catch (resetError) {

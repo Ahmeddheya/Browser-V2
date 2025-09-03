@@ -43,7 +43,8 @@ export const MenuModal: React.FC<MenuModalProps> = ({ visible, onClose, currentU
     incognitoMode, 
     toggleIncognitoMode,
     desktopMode,
-    toggleDesktopMode 
+    toggleDesktopMode,
+    addBookmark
   } = useBrowserStore();
 
   const handleShare = async () => {
@@ -55,6 +56,40 @@ export const MenuModal: React.FC<MenuModalProps> = ({ visible, onClose, currentU
       onClose();
     } catch (error) {
       Alert.alert('Error', 'Something went wrong while sharing');
+    }
+  };
+
+  const handleAddBookmark = async () => {
+    try {
+      if (!currentUrl || currentUrl === 'about:blank') {
+        Alert.alert('Error', 'Cannot bookmark this page');
+        return;
+      }
+      
+      // Extract title from URL or use domain
+      let title = 'New Bookmark';
+      try {
+        if (currentUrl.includes('google.com/search')) {
+          title = 'Google Search';
+        } else {
+          const domain = new URL(currentUrl).hostname.replace('www.', '');
+          title = domain.charAt(0).toUpperCase() + domain.slice(1);
+        }
+      } catch (error) {
+        title = currentUrl.substring(0, 50);
+      }
+      
+      await addBookmark({
+        title,
+        url: currentUrl,
+        folder: 'default',
+      });
+      
+      Alert.alert('Success', 'Bookmark added successfully');
+      onClose();
+    } catch (error) {
+      console.error('Bookmark error:', error);
+      Alert.alert('Error', `Failed to add bookmark: ${error.message || 'Unknown error'}`);
     }
   };
 
@@ -90,6 +125,7 @@ export const MenuModal: React.FC<MenuModalProps> = ({ visible, onClose, currentU
 
   // Flattened menu items without sections for cleaner design
   const menuItems = [
+    { icon: 'bookmark-outline', title: 'Add bookmark', active: false, onPress: handleAddBookmark },
     { icon: 'moon-outline', title: 'Night mode', active: nightMode, onPress: toggleNightMode },
     { icon: 'desktop-outline', title: 'Desktop site', active: desktopMode, onPress: toggleDesktopMode },
     { icon: 'settings-outline', title: 'Settings', active: false, onPress: () => navigateTo('Settings') },

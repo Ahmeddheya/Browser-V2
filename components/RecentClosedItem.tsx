@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Pressable,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -26,13 +27,23 @@ interface RecentClosedItemProps {
   isDeletePressed?: boolean;
 }
 
-export const RecentClosedItem: React.FC<RecentClosedItemProps> = ({ 
+export const RecentClosedItem: React.FC<RecentClosedItemProps> = React.memo(({ 
   tab, 
   onRestore, 
   onDelete,
   isRestorePressed = false,
   isDeletePressed = false
 }) => {
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  
+  React.useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim]);
+
   const getDomainFromUrl = (url: string) => {
     try {
       const domain = new URL(url).hostname;
@@ -56,7 +67,7 @@ export const RecentClosedItem: React.FC<RecentClosedItemProps> = ({
   };
 
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <LinearGradient
         colors={['rgba(255, 152, 0, 0.08)', 'rgba(255, 152, 0, 0.04)']}
         style={styles.gradient}
@@ -116,9 +127,9 @@ export const RecentClosedItem: React.FC<RecentClosedItemProps> = ({
           </Pressable>
         </View>
       </LinearGradient>
-    </View>
+    </Animated.View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

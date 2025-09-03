@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   Alert,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,6 +23,9 @@ const BookmarksScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
+  const [showFolderModal, setShowFolderModal] = useState(false);
+  const [selectedBookmark, setSelectedBookmark] = useState<BookmarkItem | null>(null);
+  const [newFolderName, setNewFolderName] = useState('');
   
   const { bookmarks, loadBookmarks, removeBookmark, updateBookmark, searchBookmarks } = useBrowserStore();
 
@@ -100,17 +104,44 @@ const BookmarksScreen = () => {
   };
 
   const handleEditBookmark = (item: BookmarkItem) => {
+    setSelectedBookmark(item);
     Alert.alert(
       'Bookmark Options',
       `Manage "${item.title}"`,
       [
         { text: 'Cancel', style: 'cancel' },
         { 
+          text: 'Add to Folder', 
+          onPress: () => {
+            setNewFolderName(item.folder);
+            setShowFolderModal(true);
+          }
+        },
+        { 
           text: 'Edit', 
           onPress: () => {
-            // For now, just show an alert. In a full implementation, 
-            // you'd open an edit modal/screen
-            Alert.alert('Edit Bookmark', 'Edit functionality would open here');
+            Alert.prompt(
+              'Edit Bookmark',
+              'Enter new title:',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { 
+                  text: 'Save', 
+                  onPress: async (newTitle) => {
+                    if (newTitle && newTitle.trim()) {
+                      try {
+                        await updateBookmark(item.id, { title: newTitle.trim() });
+                        Alert.alert('Success', 'Bookmark updated');
+                      } catch (error) {
+                        Alert.alert('Error', 'Failed to update bookmark');
+                      }
+                    }
+                  }
+                }
+              ],
+              'plain-text',
+              item.title
+            );
           }
         },
         {
@@ -127,6 +158,23 @@ const BookmarksScreen = () => {
         },
       ]
     );
+  };
+
+  const handleSaveFolder = async () => {
+    if (!selectedBookmark || !newFolderName.trim()) {
+      Alert.alert('Error', 'Please enter a folder name');
+      return;
+    }
+
+    try {
+      await updateBookmark(selectedBookmark.id, { folder: newFolderName.trim() });
+      setShowFolderModal(false);
+      setSelectedBookmark(null);
+      setNewFolderName('');
+      Alert.alert('Success', `Moved to "${newFolderName}" folder`);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to move bookmark');
+    }
   };
 
   const formatDate = (timestamp: number): string => {
@@ -236,6 +284,33 @@ const BookmarksScreen = () => {
           </Text>
         </View>
       )}
+
+      {/* Folder Modal */}
+      <Modal visible={showFolderModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Move to Folder</Text>
+              <TouchableOpacity onPress={() => setShowFolderModal(false)}>
+                <Ionicons name="close" size={24} color="#ffffff" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalContent}>
+              <TextInput
+                style={styles.modalInput}
+                value={newFolderName}
+                onChangeText={setNewFolderName}
+                placeholder="Enter folder name"
+                placeholderTextColor="#888"
+                autoFocus
+              />
+              <TouchableOpacity style={styles.saveButton} onPress={handleSaveFolder}>
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -366,6 +441,53 @@ const styles = StyleSheet.create({
     color: '#999',
     marginTop: 5,
     textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: '#1a1b3a',
+    borderRadius: 20,
+    width: '90%',
+    maxWidth: 400,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffffff',
+  },
+  modalContent: {
+    padding: 20,
+  },
+  modalInput: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 8,
+    padding: 12,
+    color: '#ffffff',
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  saveButton: {
+    backgroundColor: '#4285f4',
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

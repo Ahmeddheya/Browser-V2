@@ -335,15 +335,25 @@ export class DownloadManager {
     if (Platform.OS === 'web') {
       // For web, use browser's native download
       try {
+        // Create a more robust web download
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        
         const link = document.createElement('a');
-        link.href = url;
-        link.download = filename || 'download';
+        link.href = downloadUrl;
+        link.download = filename || this.generateFilename(url);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        
+        // Clean up the blob URL
+        window.URL.revokeObjectURL(downloadUrl);
+        
         Alert.alert('Success', 'Download started using browser');
       } catch (error) {
-        Alert.alert('Error', 'Download not supported in web browser');
+        console.error('Web download error:', error);
+        Alert.alert('Error', `Download failed: ${error.message}`);
       }
       return;
     }
