@@ -295,5 +295,4 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(16),
     textAlign: 'center',
   },
-
 });
