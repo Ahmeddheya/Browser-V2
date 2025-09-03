@@ -364,6 +364,7 @@ export default function BrowserScreen() {
             }} />
           </ScrollView>
 
+          {/* Menu Modal */}
           <MenuModal 
             visible={isMenuVisible} 
             onClose={() => setIsMenuVisible(false)}
@@ -451,7 +452,7 @@ export default function BrowserScreen() {
             userAgent={desktopMode ? desktopUserAgent : mobileUserAgent}
             javaScriptEnabled={true}
             domStorageEnabled={true}
-            allowsInlineMediaPlaybook={true}
+            allowsInlineMediaPlayback={true}
             mediaPlaybackRequiresUserAction={false}
             allowsFullscreenVideo={true}
             allowsBackForwardNavigationGestures={true}
@@ -460,6 +461,56 @@ export default function BrowserScreen() {
           />
         </View>
 
+        {/* Bottom Navigation */}
+        <View style={styles.bottomNav}>
+          <TouchableOpacity
+            style={[styles.navButton, !canGoBack && styles.disabledButton]}
+            onPress={goBack}
+            disabled={!canGoBack}
+          >
+            <Ionicons 
+              name="chevron-back" 
+              size={24} 
+              color={canGoBack ? '#ffffff' : '#666'} 
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.navButton, !canGoForward && styles.disabledButton]}
+            onPress={goForward}
+            disabled={!canGoForward}
+          >
+            <Ionicons 
+              name="chevron-forward" 
+              size={24} 
+              color={canGoForward ? '#ffffff' : '#666'} 
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.navButton, isHomePage && styles.activeButton]}
+            onPress={goHome}
+          >
+            <Ionicons 
+              name="home" 
+              size={24} 
+              color={isHomePage ? '#4285f4' : '#ffffff'} 
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.navButton} onPress={openTabs}>
+            <Ionicons name="copy-outline" size={24} color="#ffffff" />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.navButton} 
+            onPress={() => setIsMenuVisible(true)}
+          >
+            <Ionicons name="menu" size={24} color="#ffffff" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Menu Modal */}
         <MenuModal 
           visible={isMenuVisible} 
           onClose={() => setIsMenuVisible(false)}
@@ -607,5 +658,31 @@ const styles = StyleSheet.create({
   findButton: {
     padding: 5,
     marginLeft: 5,
+  },
+  bottomNav: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(26, 27, 58, 0.95)',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    minHeight: 68,
+  },
+  navButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 2,
+  },
+  disabledButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  activeButton: {
+    backgroundColor: 'rgba(66, 133, 244, 0.2)',
   },
 });

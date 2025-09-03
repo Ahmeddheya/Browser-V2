@@ -56,9 +56,9 @@ export default function TabsScreen() {
     try {
       const tabId = createNewTab();
       console.log('New tab created with ID:', tabId);
-      // Navigate to browser with Google search
-      router.push({
-        pathname: '/',
+      // Navigate to browser with Google search - use replace to avoid back stack issues
+      router.replace({
+        pathname: '/(tabs)',
         params: { url: 'https://www.google.com' }
       });
     } catch (error) {
