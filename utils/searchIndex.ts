@@ -1,3 +1,4 @@
+import { StorageManager, HistoryItem, BookmarkItem } from '@/utils/storage';
 
 // Search index interfaces
 export interface SearchIndexItem {

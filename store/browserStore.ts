@@ -1,4 +1,10 @@
 import { create } from 'zustand';
+import { StorageManager, BrowserSettings, HistoryItem, BookmarkItem } from '@/utils/storage';
+import SearchIndexManager from '@/utils/searchIndex';
+import DownloadManager from '@/utils/downloadManager';
+import { AdvancedBrowserSettings } from '@/types/settings';
+import { Tab, ClosedTab } from '@/types/tabs';
+import { resolveToUrlOrSearch, generateTabTitle } from '@/utils/resolveUrl';
 import { StorageManager, BrowserSettings, HistoryItem, BookmarkItem } from '../utils/storage';
 import SearchIndexManager from '../utils/searchIndex';
 import DownloadManager from '../utils/downloadManager';
