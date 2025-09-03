@@ -451,7 +451,7 @@ export default function BrowserScreen() {
             userAgent={desktopMode ? desktopUserAgent : mobileUserAgent}
             javaScriptEnabled={true}
             domStorageEnabled={true}
-            allowsInlineMediaPlayback={true}
+            allowsInlineMediaPlaybook={true}
             mediaPlaybackRequiresUserAction={false}
             allowsFullscreenVideo={true}
             allowsBackForwardNavigationGestures={true}
