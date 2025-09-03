@@ -54,10 +54,13 @@ export default function TabsScreen() {
 
   const handleCreateNewTab = () => {
     try {
-      const tabId = createNewTab('https://www.google.com');
+      const tabId = createNewTab();
       console.log('New tab created with ID:', tabId);
-      // Navigate to home page to browse the new tab
-      router.push('/');
+      // Navigate to browser with Google search
+      router.push({
+        pathname: '/',
+        params: { url: 'https://www.google.com' }
+      });
     } catch (error) {
       console.error('Create tab error:', error);
       Alert.alert('Error', 'Failed to create new tab');
@@ -108,9 +111,14 @@ export default function TabsScreen() {
 
   const handleTabPress = (tabId: string) => {
     try {
-      // Set this tab as active and navigate to browser
-      setActiveTab(tabId);
-      router.push('/(tabs)');
+      // Find the tab and navigate to its URL
+      const tab = activeTabs.find(t => t.id === tabId);
+      if (tab) {
+        router.push({
+          pathname: '/',
+          params: { url: tab.url }
+        });
+      }
     } catch (error) {
       console.error('Tab press error:', error);
     }

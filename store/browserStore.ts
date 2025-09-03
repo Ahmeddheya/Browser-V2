@@ -231,8 +231,6 @@ export const useBrowserStore = create<BrowserState>((set, get) => ({
   },
   
   createNewTab: (url?: string) => {
-    const resolvedUrl = url ? resolveToUrlOrSearch(url) : 'about:blank';
-    // If URL is provided, use it; otherwise use Google
     const finalUrl = url || 'https://www.google.com';
     const newTab: Tab = {
       id: `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,

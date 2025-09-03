@@ -21,6 +21,7 @@ import { CurrencyWidget } from '@/components/CurrencyWidget';
 import { QuickAccessGrid } from '@/components/QuickAccessGrid';
 import { MenuModal } from '@/components/MenuModal';
 import { router } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
 import { SecurityManager } from '@/utils/security';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
@@ -29,6 +30,7 @@ const { width, height } = Dimensions.get('window');
 
 export default function BrowserScreen() {
   usePerformanceMonitor('BrowserScreen');
+  const params = useLocalSearchParams();
   
   const webViewRef = useRef<WebView>(null);
   const [url, setUrl] = useState('https://www.google.com');
@@ -71,18 +73,14 @@ export default function BrowserScreen() {
   
   // Handle URL parameter from navigation
   useEffect(() => {
-    const handleUrlParam = () => {
-      const params = new URLSearchParams(window.location.search);
-      const paramUrl = params.get('url');
-      if (paramUrl) {
-        setUrl(paramUrl);
-        setCurrentUrl(paramUrl);
-        setIsHomePage(false);
-      }
-    };
-    
-    handleUrlParam();
-  }, []);
+    // Check for URL parameter from router params
+    if (params.url) {
+      const paramUrl = params.url as string;
+      setUrl(paramUrl);
+      setCurrentUrl(paramUrl);
+      setIsHomePage(false);
+    }
+  }, [params.url]);
   
   const toggleFindInPage = () => {
     setShowFindInPage(!showFindInPage);
@@ -516,51 +514,6 @@ export default function BrowserScreen() {
           style={[styles.navButton, !canGoBack && styles.disabledButton]}
           onPress={goBack}
           disabled={!canGoBack}
-        >
-          <Ionicons 
-            name="chevron-back" 
-            size={24} 
-            color={canGoBack ? '#ffffff' : '#666'} 
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.navButton, !canGoForward && styles.disabledButton]}
-          onPress={goForward}
-          disabled={!canGoForward}
-        >
-          <Ionicons 
-            name="chevron-forward" 
-            size={24} 
-            color={canGoForward ? '#ffffff' : '#666'} 
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.navButton}
-          onPress={goHome}
-        >
-          <Ionicons name="home" size={24} color="#ffffff" />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.navButton} onPress={openTabs}>
-          <Ionicons name="copy-outline" size={24} color="#ffffff" />
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.navButton} 
-          onPress={() => setIsMenuVisible(true)}
-        >
-          <Ionicons name="menu" size={24} color="#ffffff" />
-        </TouchableOpacity>
-      </View>
-
-      <MenuModal 
-        visible={isMenuVisible} 
-        onClose={() => setIsMenuVisible(false)}
-        currentUrl={currentUrl}
-        onFindInPage={toggleFindInPage}
-      />
     </LinearGradient>
   );
 }
