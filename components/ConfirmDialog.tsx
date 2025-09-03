@@ -16,7 +16,7 @@ import {
   responsiveWidth,
   responsiveHeight,
   responsiveBorderRadius,
-} from '@/utils/responsive';
+}
 
 interface ConfirmDialogProps {
   visible: boolean;

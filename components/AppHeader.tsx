@@ -17,9 +17,7 @@ import {
   responsiveHeight,
   responsiveBorderRadius,
   isSmallScreen,
-} from '@/utils/responsive';
-import { colors } from '@/theme/colors';
-import { spacing } from '@/theme/spacing';
+}
 
 interface AppHeaderProps {
   title?: string;

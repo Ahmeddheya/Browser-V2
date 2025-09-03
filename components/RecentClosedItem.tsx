@@ -17,7 +17,7 @@ import {
   responsiveWidth,
   responsiveHeight,
   responsiveBorderRadius,
-} from '@/utils/responsive';
+}
 
 interface RecentClosedItemProps {
   tab: ClosedTab;
