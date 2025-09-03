@@ -402,7 +402,6 @@ export default function BrowserScreen() {
               placeholder="Search Google or type a URL"
               placeholderTextColor="#888"
               autoCapitalize="none"
-              autoCorrect={false"
               autoCorrect={false}
             />
           </View>
@@ -452,7 +451,7 @@ export default function BrowserScreen() {
             userAgent={desktopMode ? desktopUserAgent : mobileUserAgent}
             javaScriptEnabled={true}
             domStorageEnabled={true}
-            allowsInlineMediaPlayback={true}
+            allowsInlineMediaPlaybook={true}
             mediaPlaybackRequiresUserAction={false}
             allowsFullscreenVideo={true}
             allowsBackForwardNavigationGestures={true}
