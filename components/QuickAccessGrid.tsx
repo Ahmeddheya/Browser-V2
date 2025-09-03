@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { StorageManager } from '../utils/storage';
+import { StorageManager } from '@/utils/storage';
 import {
   responsiveSpacing,
   responsiveFontSize,
@@ -13,7 +13,6 @@ import {
   getGridItemWidth,
   isSmallScreen,
   wp
-} from '../utils/responsive';
 
 interface Site {
   name: string;

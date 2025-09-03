@@ -12,8 +12,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { PasswordManager } from '../../utils/passwordManager';
-import { SavedPassword } from '../../types/settings';
+import { PasswordManager } from '@/utils/passwordManager';
+import { SavedPassword } from '@/types/settings';
 
 interface PasswordManagerSettingsProps {
   settings: {

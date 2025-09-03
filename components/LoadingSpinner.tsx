@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { responsiveIconSize, responsiveSpacing } from '../utils/responsive';
+import { responsiveIconSize, responsiveSpacing } from '@/utils/responsive';
 
 interface LoadingSpinnerProps {
   size?: number;

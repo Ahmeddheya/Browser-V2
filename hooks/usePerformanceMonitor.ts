@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
 export class PerformanceMonitor {
@@ -80,7 +81,7 @@ export class PerformanceMonitor {
 
 // Hook for easy performance monitoring
 export const usePerformanceMonitor = (componentName: string) => {
-  React.useEffect(() => {
+  useEffect(() => {
     PerformanceMonitor.startMeasure(`${componentName}_mount`);
     
     return () => {
@@ -88,7 +89,7 @@ export const usePerformanceMonitor = (componentName: string) => {
     };
   }, [componentName]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const interval = setInterval(() => {
       PerformanceMonitor.monitorMemory();
     }, 5000); // Monitor every 5 seconds

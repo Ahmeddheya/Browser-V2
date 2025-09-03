@@ -1,5 +1,5 @@
-import { SavedAddress } from '../types/settings';
-import { StorageManager } from './storage';
+import { SavedAddress } from '@/types/settings';
+import { StorageManager } from '@/utils/storage';
 
 export class AddressManager {
   private static readonly ADDRESSES_KEY = 'saved_addresses';

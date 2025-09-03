@@ -24,7 +24,7 @@ import {
   isSmallScreen,
   wp,
   hp
-} from '../utils/responsive';
+} from '@/utils/responsive';
 
 interface MenuModalProps {
   visible: boolean;
@@ -62,7 +62,7 @@ export const MenuModal: React.FC<MenuModalProps> = ({ visible, onClose, currentU
   const handleAddBookmark = async () => {
     try {
       if (!currentUrl || currentUrl === 'about:blank') {
-        Alert.alert('Error', 'Cannot bookmark this page');
+        Alert.alert('خطأ', 'لا يمكن إضافة هذه الصفحة للمفضلة');
         return;
       }
       
@@ -85,11 +85,11 @@ export const MenuModal: React.FC<MenuModalProps> = ({ visible, onClose, currentU
         folder: 'default',
       });
       
-      Alert.alert('Success', 'Bookmark added successfully');
+      Alert.alert('نجح', 'تم إضافة الصفحة للمفضلة بنجاح');
       onClose();
     } catch (error) {
       console.error('Bookmark error:', error);
-      Alert.alert('Error', `Failed to add bookmark: ${error.message || 'Unknown error'}`);
+      Alert.alert('خطأ', `فشل في إضافة المفضلة: ${error.message || 'خطأ غير معروف'}`);
     }
   };
 

@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { Tab } from '../types/tabs';
+import { Tab } from '@/types/tabs';
 import {
   responsiveSpacing,
   responsiveFontSize,
@@ -18,7 +18,7 @@ import {
   responsiveHeight,
   responsiveBorderRadius,
   isSmallScreen,
-} from '../utils/responsive';
+} from '@/utils/responsive';
 
 interface TabCardProps {
   tab: Tab;

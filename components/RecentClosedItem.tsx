@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { ClosedTab } from '../types/tabs';
+import { ClosedTab } from '@/types/tabs';
 import {
   responsiveSpacing,
   responsiveFontSize,
@@ -17,7 +17,7 @@ import {
   responsiveWidth,
   responsiveHeight,
   responsiveBorderRadius,
-} from '../utils/responsive';
+} from '@/utils/responsive';
 
 interface RecentClosedItemProps {
   tab: ClosedTab;

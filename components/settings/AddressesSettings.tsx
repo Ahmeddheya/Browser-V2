@@ -12,8 +12,8 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { AddressManager } from '../../utils/addressManager';
-import { SavedAddress } from '../../types/settings';
+import { AddressManager } from '@/utils/addressManager';
+import { SavedAddress } from '@/types/settings';
 
 interface AddressesSettingsProps {
   saveAndFill: boolean;

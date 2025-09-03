@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { responsiveSpacing, responsiveFontSize, responsiveIconSize } from '../utils/responsive';
+import { responsiveSpacing, responsiveFontSize, responsiveIconSize } from '@/utils/responsive';
 
 interface ErrorBoundaryState {
   hasError: boolean;

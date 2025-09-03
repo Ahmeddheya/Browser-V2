@@ -11,8 +11,8 @@ import {
   Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { PaymentManager } from '../../utils/paymentManager';
-import { PaymentCard } from '../../types/settings';
+import { PaymentManager } from '@/utils/paymentManager';
+import { PaymentCard } from '@/types/settings';
 
 interface PaymentMethodsSettingsProps {
   saveAndFill: boolean;

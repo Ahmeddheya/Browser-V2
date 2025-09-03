@@ -35,9 +35,9 @@ import {
   wp,
   hp
 } from '@/utils/responsive';
-import { usePerformanceMonitor } from '@/utils/performance';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
 import { SecurityManager } from '@/utils/security';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 const { width, height } = Dimensions.get('window');
 

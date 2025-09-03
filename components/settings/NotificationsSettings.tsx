@@ -8,7 +8,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { NotificationSettings } from '../../types/settings';
+import { NotificationSettings } from '@/types/settings';
 
 interface NotificationsSettingsProps {
   settings: NotificationSettings;

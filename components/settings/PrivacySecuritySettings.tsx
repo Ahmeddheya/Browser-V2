@@ -10,7 +10,7 @@ import {
   Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { PrivacySettings } from '../../types/settings';
+import { PrivacySettings } from '@/types/settings';
 
 interface PrivacySecuritySettingsProps {
   settings: PrivacySettings;

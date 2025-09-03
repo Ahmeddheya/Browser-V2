@@ -8,7 +8,7 @@ import {
   Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { AppearanceSettings as AppearanceSettingsType } from '../../types/settings';
+import { AppearanceSettings as AppearanceSettingsType } from '@/types/settings';
 
 // Conditional import for Slider
 let Slider: any = null;

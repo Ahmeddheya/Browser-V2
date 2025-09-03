@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { CurrencyAPI, CurrencyRate, CryptoPrice } from '../utils/currencyApi';
+import { CurrencyAPI, CurrencyRate, CryptoPrice } from '@/utils/currencyApi';
 import {
   responsiveSpacing,
   responsiveFontSize,
@@ -11,7 +11,7 @@ import {
   responsiveBorderRadius,
   isSmallScreen,
   wp
-} from '../utils/responsive';
+} from '@/utils/responsive';
 
 export const CurrencyWidget: React.FC = () => {
   const [currencies, setCurrencies] = useState<CurrencyRate[]>([]);

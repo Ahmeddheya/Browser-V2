@@ -1,5 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { SavedPassword } from '@/types/settings';
 import { SavedPassword } from '../types/settings';
 
 // Conditional import for LocalAuthentication

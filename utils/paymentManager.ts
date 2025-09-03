@@ -1,5 +1,5 @@
-import { PaymentCard } from '../types/settings';
-import { StorageManager } from './storage';
+import { PaymentCard } from '@/types/settings';
+import { StorageManager } from '@/utils/storage';
 
 export class PaymentManager {
   private static readonly CARDS_KEY = 'payment_cards';

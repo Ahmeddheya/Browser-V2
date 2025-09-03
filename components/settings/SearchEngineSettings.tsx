@@ -9,7 +9,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { SearchEngine } from '../../types/settings';
+import { SearchEngine } from '@/types/settings';
 
 interface SearchEngineSettingsProps {
   currentEngine: string;
